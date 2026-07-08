@@ -101,7 +101,7 @@
   #rulerCorner{position:absolute;top:0;left:0;width:18px;height:18px;background:#33333a;border-right:1px solid #26262a;border-bottom:1px solid #26262a;z-index:6;}
   #stage.tool-hand{cursor:grab;}#stage.panning{cursor:grabbing;}
   #stage.tool-select{cursor:default;}
-  #stage.tool-rect,#stage.tool-ellipse,#stage.tool-line,#stage.tool-polygon,#stage.tool-star,#stage.tool-pen,#stage.tool-pencil,#stage.tool-text{cursor:crosshair;}
+  #stage.tool-rect,#stage.tool-roundrect,#stage.tool-ellipse,#stage.tool-line,#stage.tool-polygon,#stage.tool-star,#stage.tool-pen,#stage.tool-pencil,#stage.tool-text{cursor:crosshair;}
   #textEditor{position:absolute;display:none;background:transparent;border:1px solid var(--accent);color:#000;outline:none;resize:none;overflow:hidden;padding:2px 3px;line-height:1.15;transform-origin:0 0;z-index:30;white-space:pre;-webkit-user-select:text;user-select:text;cursor:text;}
 
   /* Right panels */
@@ -393,7 +393,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 72</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 74</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -509,7 +509,7 @@ const TOOLS=[
   {id:'brush',name:'Brush',soon:true},           {id:'pencil',name:'Pencil',key:'N'},
   {id:'eraser',name:'Eraser',soon:true},         {id:'text',name:'Text',key:'T'},
   {id:'line',name:'Line',key:'L'},               {id:'arc',name:'Arc',soon:true},
-  {id:'rect',name:'Rectangle',key:'R'},          {id:'roundrect',name:'Rounded Rectangle',soon:true},
+  {id:'rect',name:'Rectangle',key:'R'},          {id:'roundrect',name:'Rounded Rectangle',key:'U'},
   {id:'ellipse',name:'Ellipse',key:'E'},         {id:'polygon',name:'Polygon',key:'G'},
   {id:'star',name:'Star',key:'S'},               {id:'spiral',name:'Spiral',soon:true},
   {id:'triangle',name:'Triangle',key:'A'},       {id:'parallelogram',name:'Parallelogram',soon:true},
@@ -789,8 +789,10 @@ function ensureLayers(){
   const valid=new Set(state.layers.map(l=>l.id)),firstId=state.layers[0].id;
   state.shapes.forEach(s=>{if(!valid.has(s.layerId))s.layerId=firstId;});
   if(!state.activeLayer||!valid.has(state.activeLayer))state.activeLayer=state.layers[state.layers.length-1].id;
-  migrateFills();
+  migrateFills();syncUidc();
 }
+function syncUidc(){let mx=0;for(const s of state.shapes)for(const v of [s.id,s.groupId])if(v){const n=parseInt(String(v).replace(/\D/g,''))||0;if(n>mx)mx=n;}if(uidc<=mx)uidc=mx+1;}
+function dedupeIds(){syncUidc();const seen=new Set();for(const s of state.shapes){if(!s.id||seen.has(s.id)){s.id=uid();reidGrad(s);}seen.add(s.id);}}
 function migrateFills(){for(const s of state.shapes){if(!fillIsGrad(s)&&typeof s.fill==='string'&&s.fill.startsWith('url(#')&&s.fill.indexOf('url(#fillg_')!==0){const lib=allGradients().find(x=>x.id===s.fill.slice(5,-1));if(lib){s.fillGrad={type:'linear',angle:lib.angle||0,stops:lib.stops.map(x=>x.slice())};s.fill='url(#fillg_'+s.id+')';}}}}
 function addLayer(){const L={id:luid(),name:'Layer '+(state.layers.length+1),visible:true,locked:false};const idx=state.layers.findIndex(l=>l.id===state.activeLayer);state.layers.splice(idx+1,0,L);state.activeLayer=L.id;if(expandedLayers)expandedLayers.add(L.id);pushHistory();render();refreshPanels();}
 function deleteLayer(){if(state.layers.length<=1)return;const idx=state.layers.findIndex(l=>l.id===state.activeLayer);if(idx<0)return;const id=state.activeLayer;const n=state.shapes.filter(s=>s.layerId===id).length;if(n&&!confirm('Delete this layer and its '+n+' object'+(n>1?'s':'')+'?'))return;state.shapes=state.shapes.filter(s=>s.layerId!==id);state.sel=state.sel.filter(sid=>state.shapes.some(s=>s.id===sid));state.layers.splice(idx,1);state.activeLayer=state.layers[Math.min(idx,state.layers.length-1)].id;pushHistory();render();refreshPanels();}
@@ -852,7 +854,7 @@ stage.addEventListener('pointerdown',e=>{
         drag={mode:'move',origin:p,applied:{x:0,y:0},startBBox:selWorldBBox(),moved:false};syncStyleFromSel();render();refreshPanels();}
       else{_lastClick=null;if(!e.shiftKey)state.sel=[];drag={mode:'marquee',start:p,add:e.shiftKey,base:[...state.sel]};render();refreshPanels();if(!e.shiftKey){const gp=document.querySelector('.panel[data-panel="geometry"]');if(gp&&gp.classList.contains('collapsed')){gp.classList.remove('collapsed');savePanelPrefs();}}}
       break;}
-    case 'rect':case 'ellipse':case 'polygon':case 'star':case 'line':case 'triangle':startDrawShape(p);break;
+    case 'rect':case 'roundrect':case 'ellipse':case 'polygon':case 'star':case 'line':case 'triangle':startDrawShape(p);break;
     case 'text':startText(p);break;
     case 'pencil':startPencil(p);break;
     case 'pen':penClick(p,e);break;
@@ -891,8 +893,8 @@ function startPan(e){drag={mode:'pan',cx:e.clientX,cy:e.clientY,px:state.panX,py
 
 function startDrawShape(p){let s;const tool=state.tool;
   if(tool==='line')s={type:'line',x1:p.x,y1:p.y,x2:p.x,y2:p.y,...baseStyle()};
-  else{const type=tool==='triangle'?'polygon':tool;s={type,x:p.x,y:p.y,w:0,h:0,...baseStyle()};if(tool==='rect')s.rx=state.style.rx;if(tool==='triangle')s.sides=3;if(tool==='polygon')s.sides=state.style.sides;if(tool==='star'){s.sides=state.style.sides;s.starRatio=state.style.starRatio;}}
-  addShape(s);if(tool==='triangle')s.name='Triangle '+state.shapes.filter(x=>x.type==='polygon'&&x.sides===3).length;
+  else{const type=tool==='triangle'?'polygon':tool==='roundrect'?'rect':tool;s={type,x:p.x,y:p.y,w:0,h:0,...baseStyle()};if(tool==='rect')s.rx=state.style.rx;if(tool==='roundrect'){s.rx=state.style.rx>0?state.style.rx:20;s._round=true;}if(tool==='triangle')s.sides=3;if(tool==='polygon')s.sides=state.style.sides;if(tool==='star'){s.sides=state.style.sides;s.starRatio=state.style.starRatio;}}
+  addShape(s);if(tool==='triangle')s.name='Triangle '+state.shapes.filter(x=>x.type==='polygon'&&x.sides===3).length;else if(tool==='roundrect')s.name='Rounded Rectangle '+state.shapes.filter(x=>x.type==='rect'&&x._round).length;
   state.sel=[s.id];drag={mode:'draw',start:p,shape:s};render();}
 function updateDrawShape(p,e){const s=drag.shape,st=drag.start;
   if(s.type==='line'){if(e.shiftKey){const dx=p.x-st.x,dy=p.y-st.y;const a=Math.round(Math.atan2(dy,dx)/(Math.PI/4))*(Math.PI/4);const len=Math.hypot(dx,dy);s.x2=st.x+Math.cos(a)*len;s.y2=st.y+Math.sin(a)*len;}else{s.x2=p.x;s.y2=p.y;}}
@@ -1507,8 +1509,8 @@ function updateToolbar(){const box=document.getElementById('toolopts');if(!box)r
       `<span class="seg tbalign" style="margin:0 4px;">${['start','middle','end','justify'].map(a=>`<button data-talign="${a}" class="${(s.align||'start')===a?'on':''}" title="${a==='start'?'Align left':a==='middle'?'Align center':a==='end'?'Align right':'Justify'}"><svg viewBox="0 0 24 24">${a==='start'?'<path d="M4 6h16M4 12h11M4 18h14"/>':a==='middle'?'<path d="M4 6h16M7 12h10M5 18h14"/>':a==='end'?'<path d="M4 6h16M9 12h11M6 18h14"/>':'<path d="M4 6h16M4 12h16M4 18h16"/>'}</svg></button>`).join('')}</span>`+
       `<span class="k" title="Character spacing — space between letters">Char↔</span><input type="number" id="tbTrack" step="0.5" title="Character spacing" value="${Math.round((s.letterSpacing||0)*10)/10}">`+
       `<span class="k" title="Line height — space between lines">Line↕</span><input type="number" id="tbLead" step="0.05" min="0.5" title="Line height" value="${s.lineHeight||1.2}">`;
-  }else if(t==='rect'||selRect){
-    html=`<span class="k">Corner</span><input type="number" id="tbCorner" min="0" value="${Math.round(selRect?selRect.rx||0:state.style.rx||0)}"><span class="k">px</span>`;
+  }else if(t==='rect'||t==='roundrect'||selRect){
+    html=`<span class="k">Corner</span><input type="number" id="tbCorner" min="0" value="${Math.round(selRect?selRect.rx||0:(t==='roundrect'&&!(state.style.rx>0)?20:state.style.rx||0))}"><span class="k">px</span>`;
   }else if(t==='polygon'||t==='star'||selPoly){
     html=`<span class="k">Sides</span><input type="number" id="tbSides" min="3" max="60" value="${selPoly?selPoly.sides:state.style.sides}">`;
   }else if(t==='pen'){html=`<span class="hintmsg">Click to place points · click the first point (or press Enter) to finish</span>`;}
@@ -1631,7 +1633,7 @@ function mergeLibraries(o){
   if(Array.isArray(o.gradients)){for(const g of o.gradients){const i=customGradients.findIndex(x=>x.id===g.id);if(i>=0)customGradients[i]=g;else customGradients.push(g);}saveGradients();}
   if(Array.isArray(o.swatches)){for(const c of o.swatches)if(!customSwatches.includes(c))customSwatches.push(c);saveSwatches();}}
 function openFile(){document.getElementById('fileInput').click();}
-document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();mergeLibraries(o);state.doc.name=f.name.replace(/\.json$/i,'')||state.doc.name||'Untitled';}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}state.sel=[];resetHistory();render();refreshPanels();zoomFit();updateDocName();}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
+document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();dedupeIds();mergeLibraries(o);state.doc.name=f.name.replace(/\.json$/i,'')||state.doc.name||'Untitled';}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}state.sel=[];resetHistory();render();refreshPanels();zoomFit();updateDocName();}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
 function newDoc(){if(state.shapes.length&&!confirm('Start a new document? Unsaved work will be lost.'))return;state.shapes=[];state.sel=[];state.layers=[];state.activeLayer=null;expandedLayers=null;state.doc.name='Untitled';ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
 
 //////////////////// KEYBOARD ////////////////////
@@ -1714,9 +1716,9 @@ document.getElementById('canvasModal').onclick=e=>{if(e.target.id==='canvasModal
 //////////////////// INIT ////////////////////
 function init(){buildStage();buildTools();buildMenus();buildPanels();setToolUI();
   const saved=localStorage.getItem('graphic-studio-doc');
-  if(saved){try{const o=JSON.parse(saved);if(o.shapes&&o.shapes.length){state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;uidc=state.shapes.length+2;}else seedDemo();}catch(_){seedDemo();}}else seedDemo();
+  if(saved){try{const o=JSON.parse(saved);if(o.shapes&&o.shapes.length){state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;}else seedDemo();}catch(_){seedDemo();}}else seedDemo();
   if(!state.doc.name)state.doc.name='Untitled';
-  ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
+  ensureLayers();dedupeIds();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
 function seedDemo(){const bg=luid(),ct=luid();
   state.layers=[{id:bg,name:'Background',visible:true,locked:false},{id:ct,name:'Content',visible:true,locked:false}];
   state.activeLayer=ct;expandedLayers=null;
