@@ -418,7 +418,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 83</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 84</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -586,7 +586,7 @@ let state={
 let history=[],future=[],clipboard=[],committed=null;
 let uidc=1;const uid=()=>'s'+(uidc++);
 let lidc=1;const luid=()=>'L'+(lidc++);
-let expandedLayers=null;
+let collapsedLayers=new Set();
 let sizeLocked=localStorage.getItem('gs-lock')==='1';
 let docUnit=localStorage.getItem('gs-unit')||'px';
 const UNIT_PX={px:1,in:96,cm:96/2.54,mm:96/25.4};
@@ -838,7 +838,7 @@ function ensureLayers(){
 function syncUidc(){let mx=0;for(const s of state.shapes)for(const v of [s.id,s.groupId])if(v){const n=parseInt(String(v).replace(/\D/g,''))||0;if(n>mx)mx=n;}if(uidc<=mx)uidc=mx+1;}
 function dedupeIds(){syncUidc();const seen=new Set();for(const s of state.shapes){if(!s.id||seen.has(s.id)){s.id=uid();reidGrad(s);}seen.add(s.id);}}
 function migrateFills(){for(const s of state.shapes){if(!fillIsGrad(s)&&typeof s.fill==='string'&&s.fill.startsWith('url(#')&&s.fill.indexOf('url(#fillg_')!==0){const lib=allGradients().find(x=>x.id===s.fill.slice(5,-1));if(lib){s.fillGrad={type:'linear',angle:lib.angle||0,stops:lib.stops.map(x=>x.slice())};s.fill='url(#fillg_'+s.id+')';}}}}
-function addLayer(){const L={id:luid(),name:'Layer '+(state.layers.length+1),visible:true,locked:false};const idx=state.layers.findIndex(l=>l.id===state.activeLayer);state.layers.splice(idx+1,0,L);state.activeLayer=L.id;if(expandedLayers)expandedLayers.add(L.id);pushHistory();render();refreshPanels();}
+function addLayer(){const L={id:luid(),name:'Layer '+(state.layers.length+1),visible:true,locked:false};const idx=state.layers.findIndex(l=>l.id===state.activeLayer);state.layers.splice(idx+1,0,L);state.activeLayer=L.id;collapsedLayers.delete(L.id);pushHistory();render();refreshPanels();}
 function deleteLayer(){if(state.layers.length<=1)return;const idx=state.layers.findIndex(l=>l.id===state.activeLayer);if(idx<0)return;const id=state.activeLayer;const n=state.shapes.filter(s=>s.layerId===id).length;if(n&&!confirm('Delete this layer and its '+n+' object'+(n>1?'s':'')+'?'))return;state.shapes=state.shapes.filter(s=>s.layerId!==id);state.sel=state.sel.filter(sid=>state.shapes.some(s=>s.id===sid));state.layers.splice(idx,1);state.activeLayer=state.layers[Math.min(idx,state.layers.length-1)].id;pushHistory();render();refreshPanels();}
 function raiseLayer(){const i=state.layers.findIndex(l=>l.id===state.activeLayer);if(i<0||i>=state.layers.length-1)return;const[l]=state.layers.splice(i,1);state.layers.splice(i+1,0,l);pushHistory();render();refreshPanels();}
 function lowerLayer(){const i=state.layers.findIndex(l=>l.id===state.activeLayer);if(i<=0)return;const[l]=state.layers.splice(i,1);state.layers.splice(i-1,0,l);pushHistory();render();refreshPanels();}
@@ -1476,11 +1476,10 @@ function objectRow(s){
   return d;
 }
 function renderLayers(){const box=document.getElementById('layers');if(!box)return;box.innerHTML='';
-  if(!expandedLayers)expandedLayers=new Set(state.layers.map(l=>l.id));
-  for(let li=state.layers.length-1;li>=0;li--){const L=state.layers[li];const exp=expandedLayers.has(L.id);
+  for(let li=state.layers.length-1;li>=0;li--){const L=state.layers[li];const exp=!collapsedLayers.has(L.id);
     const wrap2=document.createElement('div');wrap2.className='lyr'+(L.id===state.activeLayer?' active':'');
     const head=document.createElement('div');head.className='lyr-head';
-    const tri=document.createElement('span');tri.className='lyr-tri';tri.textContent=exp?'▾':'▸';tri.onclick=e=>{e.stopPropagation();if(exp)expandedLayers.delete(L.id);else expandedLayers.add(L.id);renderLayers();};
+    const tri=document.createElement('span');tri.className='lyr-tri';tri.textContent=exp?'▾':'▸';tri.onclick=e=>{e.stopPropagation();if(exp)collapsedLayers.add(L.id);else collapsedLayers.delete(L.id);renderLayers();};
     const eye=document.createElement('span');eye.className='lyr-eye';eye.innerHTML=L.visible===false?eyeOff():eyeOn();eye.onclick=e=>{e.stopPropagation();toggleLayerVis(L);};
     const lock=document.createElement('span');lock.className='lyr-lock'+(L.locked?' on':'');lock.innerHTML=L.locked?lockIcon():unlockIcon();lock.onclick=e=>{e.stopPropagation();toggleLayerLock(L);};
     const nm=document.createElement('span');nm.className='lyr-name';nm.textContent=L.name;
@@ -1786,7 +1785,7 @@ function mergeLibraries(o){
   if(Array.isArray(o.swatches)){for(const c of o.swatches)if(!customSwatches.includes(c))customSwatches.push(c);saveSwatches();}}
 function openFile(){document.getElementById('fileInput').click();}
 document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();dedupeIds();mergeLibraries(o);state.doc.name=f.name.replace(/\.json$/i,'')||state.doc.name||'Untitled';}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}state.sel=[];resetHistory();render();refreshPanels();zoomFit();updateDocName();}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
-function newDoc(){if(state.shapes.length&&!confirm('Start a new document? Unsaved work will be lost.'))return;state.shapes=[];state.sel=[];state.layers=[];state.activeLayer=null;expandedLayers=null;state.doc.name='Untitled';ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
+function newDoc(){if(state.shapes.length&&!confirm('Start a new document? Unsaved work will be lost.'))return;state.shapes=[];state.sel=[];state.layers=[];state.activeLayer=null;collapsedLayers.clear();state.doc.name='Untitled';ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
 
 //////////////////// KEYBOARD ////////////////////
 window.addEventListener('keydown',e=>{
@@ -1874,7 +1873,7 @@ function init(){buildStage();buildTools();buildMenus();buildPanels();setToolUI()
   ensureLayers();dedupeIds();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
 function seedDemo(){const bg=luid(),ct=luid();
   state.layers=[{id:bg,name:'Background',visible:true,locked:false},{id:ct,name:'Content',visible:true,locked:false}];
-  state.activeLayer=ct;expandedLayers=null;
+  state.activeLayer=ct;collapsedLayers.clear();
   state.shapes=[
   {id:uid(),layerId:bg,type:'rect',name:'Card',x:120,y:120,w:560,h:360,rx:24,fill:'url(#g-blue)',stroke:'#1b52c9',strokeWidth:2,opacity:1,fillOn:true,strokeOn:true,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
   {id:uid(),layerId:bg,type:'ellipse',name:'Accent',x:470,y:70,w:180,h:180,fill:'url(#g-orange)',stroke:'#fff',strokeWidth:0,opacity:.95,fillOn:true,strokeOn:false,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
