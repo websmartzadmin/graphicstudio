@@ -282,7 +282,10 @@
   .lyr-head{display:flex;align-items:center;gap:4px;padding:6px 8px;cursor:pointer;}
   .lyr-head:hover{background:var(--panel2);}
   .lyr.active>.lyr-head{background:var(--active);box-shadow:inset 2px 0 0 var(--accent);}
-  .lyr-tri{width:12px;color:var(--muted);font-size:9px;text-align:center;cursor:pointer;flex:0 0 auto;}
+  .lyr-tri{width:20px;color:var(--muted);cursor:pointer;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .lyr-tri svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .12s;}
+  .lyr-tri.open svg{transform:rotate(90deg);}
+  .lyr-tri:hover{color:var(--text);}
   .lyr-eye,.lyr-lock{width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);border-radius:4px;cursor:pointer;flex:0 0 auto;}
   .lyr-eye:hover,.lyr-lock:hover{background:var(--hover);color:var(--text);}
   .lyr-lock.on{color:var(--accent);}
@@ -418,7 +421,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 84</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 86</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1479,7 +1482,7 @@ function renderLayers(){const box=document.getElementById('layers');if(!box)retu
   for(let li=state.layers.length-1;li>=0;li--){const L=state.layers[li];const exp=!collapsedLayers.has(L.id);
     const wrap2=document.createElement('div');wrap2.className='lyr'+(L.id===state.activeLayer?' active':'');
     const head=document.createElement('div');head.className='lyr-head';
-    const tri=document.createElement('span');tri.className='lyr-tri';tri.textContent=exp?'▾':'▸';tri.onclick=e=>{e.stopPropagation();if(exp)collapsedLayers.add(L.id);else collapsedLayers.delete(L.id);renderLayers();};
+    const tri=document.createElement('span');tri.className='lyr-tri'+(exp?' open':'');tri.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';tri.onclick=e=>{e.stopPropagation();if(exp)collapsedLayers.add(L.id);else collapsedLayers.delete(L.id);renderLayers();};
     const eye=document.createElement('span');eye.className='lyr-eye';eye.innerHTML=L.visible===false?eyeOff():eyeOn();eye.onclick=e=>{e.stopPropagation();toggleLayerVis(L);};
     const lock=document.createElement('span');lock.className='lyr-lock'+(L.locked?' on':'');lock.innerHTML=L.locked?lockIcon():unlockIcon();lock.onclick=e=>{e.stopPropagation();toggleLayerLock(L);};
     const nm=document.createElement('span');nm.className='lyr-name';nm.textContent=L.name;
