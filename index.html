@@ -393,7 +393,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 74</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 78</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -475,6 +475,20 @@
       <div class="hint" id="csHint" style="padding:4px 12px 0;"></div>
     </div>
     <div class="modal-actions"><button id="csCancel">Cancel</button><button id="csGo" class="primary">Apply</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="printModal">
+  <div class="modal">
+    <div class="modal-title">Print as PDF</div>
+    <div class="modal-body">
+      <div class="row"><label>Resolution</label><div class="ctl"><select id="prDpi"><option value="150">150 DPI (Draft)</option><option value="300" selected>300 DPI (Standard)</option><option value="600">600 DPI (High)</option></select></div></div>
+      <div class="row"><label>Paper</label><div class="ctl"><select id="prPaper"><option value="doc" selected>Fit to Document</option><option value="letter">Letter (8.5 × 11 in)</option><option value="a4">A4</option><option value="legal">Legal (8.5 × 14 in)</option><option value="tabloid">Tabloid (11 × 17 in)</option></select></div></div>
+      <div class="row"><label>Orientation</label><div class="ctl"><select id="prOrient"><option value="auto" selected>Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div></div>
+      <div class="row"><label>Placement</label><div class="ctl"><select id="prPlace"><option value="fit" selected>Center &amp; Fit</option><option value="fill">Fill Page</option><option value="actual">Actual Size</option></select></div></div>
+      <div class="hint" id="prHint" style="padding:4px 12px 0;color:var(--muted);font-size:11px;"></div>
+    </div>
+    <div class="modal-actions"><button id="prCancel">Cancel</button><button id="prGo" class="primary">Print…</button></div>
   </div>
 </div>
 
@@ -1543,6 +1557,55 @@ function buildExportSVG(){const svg=el('svg',{xmlns:SVGNS,width:state.doc.w,heig
   svg.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'#ffffff'}));
   for(const s of state.shapes){if(s.visible===false)continue;svg.append(buildShapeEl(s,defs));}
   return new XMLSerializer().serializeToString(svg);}
+// ---------- PRINT ----------
+const PAPERS={letter:[612,792],a4:[595.28,841.89],legal:[612,1008],tabloid:[792,1224]};
+function openPrintModal(){document.getElementById('printModal').classList.add('show');updatePrintUI();}
+function closePrint(){document.getElementById('printModal').classList.remove('show');}
+function updatePrintUI(){const paper=document.getElementById('prPaper').value,custom=paper!=='doc';
+  document.getElementById('prOrient').closest('.row').style.display=custom?'':'none';
+  document.getElementById('prPlace').closest('.row').style.display=custom?'':'none';
+  const hint=document.getElementById('prHint');
+  hint.textContent=custom?('Places the '+state.doc.w+'×'+state.doc.h+' px artwork on '+document.getElementById('prPaper').selectedOptions[0].textContent.replace(/\s*\(.*\)/,'')+'.')
+    :('Page = document size ('+state.doc.w+'×'+state.doc.h+' px @ 96 DPI). Everything included.');}
+function buildPdfPlaced(jpeg,imgW,imgH,pageW,pageH,dx,dy,dw,dh){
+  const f=n=>+(+n).toFixed(2);pageW=f(pageW);pageH=f(pageH);dx=f(dx);dy=f(dy);dw=f(dw);dh=f(dh);
+  let out='%PDF-1.3\n';const off=[];const put=(n,b)=>{off[n]=out.length;out+=n+' 0 obj\n'+b+'\nendobj\n';};
+  put(1,'<</Type/Catalog/Pages 2 0 R>>');put(2,'<</Type/Pages/Kids[3 0 R]/Count 1>>');
+  put(3,'<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+pageW+' '+pageH+']/Resources<</XObject<</Im0 4 0 R>>>>/Contents 5 0 R>>');
+  off[4]=out.length;out+='4 0 obj\n<</Type/XObject/Subtype/Image/Width '+imgW+'/Height '+imgH+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+jpeg.length+'>>\nstream\n'+jpeg+'\nendstream\nendobj\n';
+  const content='q '+dw+' 0 0 '+dh+' '+dx+' '+dy+' cm /Im0 Do Q';
+  put(5,'<</Length '+content.length+'>>\nstream\n'+content+'\nendstream');
+  const xref=out.length;out+='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+  out+='trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n'+xref+'\n%%EOF';return out;}
+function doPrint(){
+  const dpi=+document.getElementById('prDpi').value||300,paper=document.getElementById('prPaper').value,orient=document.getElementById('prOrient').value,place=document.getElementById('prPlace').value;
+  const S=Math.max(1,dpi/96),reg=buildExportRegion('canvas',true);
+  const docPtW=state.doc.w*72/96,docPtH=state.doc.h*72/96;
+  closePrint();
+  const img=new Image();
+  img.onload=()=>{try{
+    const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(reg.w*S));cv.height=Math.max(1,Math.round(reg.h*S));
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    const jpeg=atob(cv.toDataURL('image/jpeg',0.94).split(',')[1]);let pdf;
+    if(paper==='doc'){pdf=buildPdfPlaced(jpeg,cv.width,cv.height,docPtW,docPtH,0,0,docPtW,docPtH);}
+    else{let[pw,ph]=PAPERS[paper]||PAPERS.letter;const land=orient==='landscape'||(orient==='auto'&&state.doc.w>state.doc.h);if(land)[pw,ph]=[ph,pw];
+      const margin=place==='actual'?0:18,availW=pw-margin*2,availH=ph-margin*2;let dw,dh;
+      if(place==='actual'){dw=docPtW;dh=docPtH;}else if(place==='fill'){const s=Math.max(availW/docPtW,availH/docPtH);dw=docPtW*s;dh=docPtH*s;}else{const s=Math.min(availW/docPtW,availH/docPtH);dw=docPtW*s;dh=docPtH*s;}
+      pdf=buildPdfPlaced(jpeg,cv.width,cv.height,pw,ph,(pw-dw)/2,(ph-dh)/2,dw,dh);}
+    const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&0xff;
+    const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+    const ifr=document.createElement('iframe');ifr.className='printframe';ifr.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;opacity:0;border:0;pointer-events:none;';
+    ifr.onload=()=>{setTimeout(()=>{try{ifr.contentWindow.focus();ifr.contentWindow.print();}catch(err){window.open(url,'_blank');}},600);};
+    ifr.src=url;document.body.appendChild(ifr);
+    setTimeout(()=>{URL.revokeObjectURL(url);if(ifr.parentNode)ifr.remove();},180000);
+  }catch(err){alert('Print failed: '+err.message);}};
+  img.onerror=()=>alert('Could not prepare the document for printing.');
+  img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(reg.svg)));
+}
+document.getElementById('prCancel').onclick=closePrint;
+document.getElementById('prGo').onclick=doPrint;
+document.getElementById('prPaper').onchange=updatePrintUI;
+document.getElementById('printModal').onclick=e=>{if(e.target.id==='printModal')closePrint();};
 function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function mimeFor(ext){return {png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',svg:'image/svg+xml',pdf:'application/pdf',json:'application/json'}[(ext||'').toLowerCase()]||'application/octet-stream';}
 async function saveBlob(blob,name){
@@ -1566,10 +1629,12 @@ function regionBBox(region){
 function buildExportRegion(region,whiteBg){
   const bb=regionBBox(region);
   const svg=el('svg',{xmlns:SVGNS,width:bb.w,height:bb.h,viewBox:`${bb.x} ${bb.y} ${bb.w} ${bb.h}`});
-  const defs=el('defs',{});for(const g of GRADIENTS){const lg=el('linearGradient',{id:g.id,x1:0,y1:0,x2:0,y2:1});for(const[c,o] of g.stops)lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}svg.append(defs);
+  const defs=el('defs',{});
+  for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}
+  svg.append(defs);
   if(whiteBg)svg.append(el('rect',{x:bb.x,y:bb.y,width:bb.w,height:bb.h,fill:'#ffffff'}));
   const list=region==='selection'?renderOrder().filter(s=>state.sel.includes(s.id)):renderOrder().filter(shapeVisible);
-  for(const s of list){svg.append(buildShapeEl(s,defs));}
+  for(const s of list){if(fillIsGrad(s))appendShapeGrad(defs,'fillg_'+s.id,s.fillGrad);svg.append(buildShapeEl(s,defs));}
   return{svg:new XMLSerializer().serializeToString(svg),w:bb.w,h:bb.h};
 }
 function downloadBytes(name,bin,type){const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i)&0xff;saveBlob(new Blob([bytes],{type}),name);}
@@ -1648,6 +1713,7 @@ window.addEventListener('keydown',e=>{
   if(mod&&e.key.toLowerCase()==='g'){e.preventDefault();if(e.shiftKey)ungroupSel();else groupSel();return;}
   if(mod&&e.key.toLowerCase()==='a'){e.preventDefault();state.sel=state.shapes.filter(s=>s.visible!==false).map(s=>s.id);syncStyleFromSel();render();refreshPanels();return;}
   if(mod&&e.key.toLowerCase()==='s'){e.preventDefault();saveDoc();return;}
+  if(mod&&e.key.toLowerCase()==='p'){e.preventDefault();openPrintModal();return;}
   if(mod&&(e.key==='='||e.key==='+')){e.preventDefault();setZoom(state.zoom*1.2);return;}
   if(mod&&(e.key==='-'||e.key==='_')){e.preventDefault();setZoom(state.zoom/1.2);return;}
   if(mod&&e.key==='0'){e.preventDefault();zoomFit();return;}
@@ -1663,7 +1729,7 @@ stage.addEventListener('dblclick',e=>{if(penDraft)commitPen();});
 
 //////////////////// MENU BAR ////////////////////
 const MENUS=[
-  {name:'File',items:[['New','',newDoc],['Open…','',openFile],['Save','⌘S',saveDoc],'-',['Export…','',openExportModal]]},
+  {name:'File',items:[['New','',newDoc],['Open…','',openFile],['Save','⌘S',saveDoc],'-',['Export…','',openExportModal],['Print…','⌘P',openPrintModal]]},
   {name:'Edit',items:[['Undo','⌘Z',undo,'undo'],['Redo','⇧⌘Z',redo,'redo'],'-',['Copy','⌘C',copySel],['Paste','⌘V',pasteClip],['Duplicate','⌘D',duplicateSel],['Delete','⌫',deleteSel],'-',['Select All','⌘A',selectAll]]},
   {name:'Arrange',items:[
     ['Bring to Front','',()=>arrange('front')],['Bring Forward','',()=>moveLayer(1)],['Send Backward','',()=>moveLayer(-1)],['Send to Back','',()=>arrange('back')],'-',
