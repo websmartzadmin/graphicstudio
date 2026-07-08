@@ -187,6 +187,26 @@
   .attrsw.none{background:repeating-linear-gradient(45deg,#0000 0 4px,#ffffff22 4px 8px);}
   .attrsw.bigsw{width:46px;height:26px;}
   .hexin{flex:1;min-width:0;text-transform:uppercase;}
+  .geo2col{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:8px 12px 2px;}
+  .geosec{padding:6px 12px 2px;}
+  .geocol{display:flex;flex-direction:column;}
+  .geohead{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+  .geofield{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
+  .geofield .gi{width:15px;flex:0 0 auto;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;}
+  .geofield .gi svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+  .geofield .unit{flex:0 0 auto;color:var(--muted);font-size:10px;min-width:8px;}
+  .geofield .stepper{flex:1;min-width:0;}
+  .geofield select{flex:1;min-width:0;}
+  .geofield .orientseg{flex:1;}
+  .docbgsw{width:32px;height:22px;border-radius:5px;border:1px solid var(--line2);cursor:pointer;flex:0 0 auto;box-shadow:inset 0 0 0 1px #0003;}
+  .dsrow{display:flex;align-items:center;gap:6px;padding:3px 0;}
+  .dsrow>label{width:54px;flex:0 0 auto;color:var(--muted);font-size:11px;}
+  .dsrow .stepper{flex:1;min-width:0;}
+  .dsrow>select{flex:1;min-width:0;}
+  .dsrow .dstrail{flex:0 0 auto;}
+  .dsrow select.dstrail{max-width:86px;flex:0 0 auto;}
+  .dsswatch{width:60px;height:42px;border-radius:5px;border:1px solid var(--line2);cursor:pointer;margin-top:4px;box-shadow:inset 0 0 0 1px #0003;}
+  .dsswatch.transp{background:repeating-conic-gradient(#b8b8b8 0 25%,#fff 0 50%) 50%/14px 14px;}
   #fgStopPos{width:50px;flex:0 0 auto;}
   #fgStopDel{flex:0 0 auto;background:var(--panel);border:1px solid var(--line2);color:var(--muted);border-radius:4px;width:26px;height:24px;cursor:pointer;}
   #fgStopDel:disabled{opacity:.35;cursor:default;}
@@ -324,6 +344,11 @@
   .ctxmenu button:hover{background:var(--accent);color:#fff;}
   .ctxmenu button.danger{color:#ff6b6b;}
   .ctxmenu button.danger:hover{background:#ff3b30;color:#fff;}
+  .ctxmenu button:disabled{opacity:.38;cursor:default;}
+  .ctxmenu button:disabled:hover{background:none;color:var(--text);}
+  .ctxsep{height:1px;background:var(--line2);margin:4px 8px;}
+  #orPort svg,#orLand svg{width:22px;height:22px;}
+  #orPort,#orLand{padding:7px 12px;}
 
   /* Menu bar */
   .menubar{display:flex;align-items:center;gap:1px;}
@@ -393,7 +418,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 78</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 83</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -563,6 +588,10 @@ let uidc=1;const uid=()=>'s'+(uidc++);
 let lidc=1;const luid=()=>'L'+(lidc++);
 let expandedLayers=null;
 let sizeLocked=localStorage.getItem('gs-lock')==='1';
+let docUnit=localStorage.getItem('gs-unit')||'px';
+const UNIT_PX={px:1,in:96,cm:96/2.54,mm:96/25.4};
+const toUnit=px=>docUnit==='px'?Math.round(px):Math.round(px/UNIT_PX[docUnit]*1000)/1000;
+const fromUnit=v=>Math.max(1,Math.round((+v||0)*UNIT_PX[docUnit]));
 let tabOrder=null;
 let customSwatches=[];try{customSwatches=JSON.parse(localStorage.getItem('gs-swatches')||'[]');}catch(_){}
 function saveSwatches(){localStorage.setItem('gs-swatches',JSON.stringify(customSwatches));}
@@ -605,9 +634,9 @@ function shapeBBox(s){
   return{x:0,y:0,w:1,h:1};
 }
 function shapeCenter(s){const b=shapeBBox(s);return{x:b.x+b.w/2,y:b.y+b.h/2};}
-function shapeMatrix(s){const c=shapeCenter(s);let m=new DOMMatrix();if(!s.rot&&!s.shear)return m;m=m.translate(c.x,c.y);if(s.rot)m=m.rotate(s.rot);if(s.shear)m=m.skewX(s.shear);m=m.translate(-c.x,-c.y);return m;}
+function shapeMatrix(s){const c=shapeCenter(s);let m=new DOMMatrix();if(!s.rot&&!s.shear&&!s.shearY)return m;m=m.translate(c.x,c.y);if(s.rot)m=m.rotate(s.rot);if(s.shear)m=m.skewX(s.shear);if(s.shearY)m=m.skewY(s.shearY);m=m.translate(-c.x,-c.y);return m;}
 function applyM(m,x,y){return{x:m.a*x+m.c*y+m.e,y:m.b*x+m.d*y+m.f};}
-function transformStr(s){if(!s.rot&&!s.shear)return null;const m=shapeMatrix(s);return`matrix(${m.a} ${m.b} ${m.c} ${m.d} ${m.e} ${m.f})`;}
+function transformStr(s){if(!s.rot&&!s.shear&&!s.shearY)return null;const m=shapeMatrix(s);return`matrix(${m.a} ${m.b} ${m.c} ${m.d} ${m.e} ${m.f})`;}
 function toLocal(p,s){if(!s.rot&&!s.shear)return p;const inv=shapeMatrix(s).inverse();return applyM(inv,p.x,p.y);}
 function setShapeBBox(s,nb){
   const ob=shapeBBox(s),sx=nb.w/ob.w,sy=nb.h/ob.h;
@@ -741,17 +770,18 @@ function updateViewport(){vp.setAttribute('transform',`translate(${state.panX} $
 function niceStep(minU){const ps=[1,2,5];let m=1;while(m<1e7){for(const p of ps){const s=p*m;if(s>=minU)return s;}m*=10;}return m;}
 function drawRulers(){const rt=document.getElementById('rulerTop'),rl=document.getElementById('rulerLeft');if(!rt||!rl||!rt.clientWidth)return;const dpr=window.devicePixelRatio||1,stepU=niceStep(58/state.zoom),minU=stepU/5;
   function setup(c){c.width=c.clientWidth*dpr;c.height=c.clientHeight*dpr;const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,c.clientWidth,c.clientHeight);x.strokeStyle='#7d7d84';x.fillStyle='#aaaab0';x.font='9px -apple-system,Segoe UI,sans-serif';x.lineWidth=1;return x;}
+  const sc=state.doc.scale||1;
   const ct=setup(rt),tw=rt.clientWidth,th=rt.clientHeight;
-  for(let u=Math.floor((-state.panX/state.zoom)/minU)*minU;;u+=minU){const px=state.panX+u*state.zoom;if(px>tw+1)break;if(px<-1)continue;const maj=Math.abs(u%stepU)<1e-6;ct.beginPath();ct.moveTo(px+.5,maj?th-9:th-4);ct.lineTo(px+.5,th);ct.stroke();if(maj)ct.fillText(String(Math.round(u)),px+2,9);}
+  for(let u=Math.floor((-state.panX/state.zoom)/minU)*minU;;u+=minU){const px=state.panX+u*state.zoom;if(px>tw+1)break;if(px<-1)continue;const maj=Math.abs(u%stepU)<1e-6;ct.beginPath();ct.moveTo(px+.5,maj?th-9:th-4);ct.lineTo(px+.5,th);ct.stroke();if(maj)ct.fillText(String(Math.round(u*sc)),px+2,9);}
   const cl=setup(rl),lw=rl.clientWidth,lh=rl.clientHeight;
-  for(let v=Math.floor((-state.panY/state.zoom)/minU)*minU;;v+=minU){const py=state.panY+v*state.zoom;if(py>lh+1)break;if(py<-1)continue;const maj=Math.abs(v%stepU)<1e-6;cl.beginPath();cl.moveTo(maj?lw-9:lw-4,py+.5);cl.lineTo(lw,py+.5);cl.stroke();if(maj){cl.save();cl.translate(8,py-2);cl.rotate(-Math.PI/2);cl.fillText(String(Math.round(v)),0,0);cl.restore();}}}
+  for(let v=Math.floor((-state.panY/state.zoom)/minU)*minU;;v+=minU){const py=state.panY+v*state.zoom;if(py>lh+1)break;if(py<-1)continue;const maj=Math.abs(v%stepU)<1e-6;cl.beginPath();cl.moveTo(maj?lw-9:lw-4,py+.5);cl.lineTo(lw,py+.5);cl.stroke();if(maj){cl.save();cl.translate(8,py-2);cl.rotate(-Math.PI/2);cl.fillText(String(Math.round(v*sc)),0,0);cl.restore();}}}
 window.addEventListener('resize',()=>drawRulers());
 function resetDefs(){gDefs.innerHTML='';for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));gDefs.append(lg);}
   for(const s of state.shapes)if(fillIsGrad(s))appendShapeGrad(gDefs,'fillg_'+s.id,s.fillGrad);}
 function render(){
   resetDefs();
   gBoard.innerHTML='';
-  gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'#ffffff'}));
+  gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:state.doc.bg||'#ffffff'}));
   gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'none',stroke:'#00000022','stroke-width':1/state.zoom}));
   gContent.innerHTML='';
   for(const s of renderOrder()){if(!shapeVisible(s))continue;const e=buildShapeEl(s);e.dataset.id=s.id;e.style.cursor='move';if(editing&&editing.id===s.id)e.style.opacity=0;gContent.append(e);
@@ -1063,7 +1093,7 @@ function applyLibGradToFill(id){const lib=allGradients().find(x=>x.id===id);if(!
 
 //////////////////// INSPECTOR (tabbed palette) ////////////////////
 const INSP_TABS=[
-  {key:'geometry',name:'Arrange',icon:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/>'},
+  {key:'geometry',name:'Position',icon:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/>'},
   {key:'appearance',name:'Style',icon:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 010 16z" fill="currentColor" stroke="none"/>'},
   {key:'text',name:'Text',icon:'<path d="M6 20l6-15 6 15M8.5 14h7"/>'},
   {key:'styles',name:'Library',icon:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>'},
@@ -1132,19 +1162,35 @@ function fillText(box){const sel=selShapes(),txt=sel.filter(s=>s.type==='text'),
   box.querySelectorAll('[data-tstyle]').forEach(b=>b.onclick=()=>toggleTextStyle(b.dataset.tstyle));}
 
 function fillGeometry(box){const sels=selShapes();
-  if(!sels.length){const isLand=state.doc.w>state.doc.h;box.innerHTML=`<div style="padding:6px 12px 0;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;">Canvas Size</div>
-    <div class="row"><label>Preset</label><div class="ctl"><select id="docPreset">${DOCPRESETS.map((pr,i)=>`<option value="${i}">${pr.name}</option>`).join('')}</select></div></div>
-    <div class="row"><label>Orient</label><div class="ctl"><div class="seg"><button id="orPort" class="${isLand?'':'on'}" title="Portrait"><svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="1"/></svg></button><button id="orLand" class="${isLand?'on':''}" title="Landscape"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1"/></svg></button></div></div></div>
-    <div class="georow"><div class="field"><span class="fl">W</span><input type="number" id="docW" value="${state.doc.w}"></div><div class="field"><span class="fl">H</span><input type="number" id="docH" value="${state.doc.h}"></div><button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
-    <div class="hint" style="padding:8px 12px;">Canvas size. Select an object to edit its geometry.</div>`;
+  if(!sels.length){const isLand=state.doc.w>state.doc.h,transp=state.doc.bg==='none',bg=toHex(state.doc.bg&&state.doc.bg!=='none'?state.doc.bg:'#ffffff');
+    const unitOpts=[['px','pixels'],['in','inches'],['cm','centimeters'],['mm','millimeters']].map(([v,n])=>`<option value="${v}"${docUnit===v?' selected':''}>${n}</option>`).join('');
+    const stp=docUnit==='px'?1:0.1;
+    box.innerHTML=`
+    <div class="geosec"><div class="geohead">Canvas</div>
+      <div class="dsrow"><label>Width:</label><input type="number" id="docW" value="${toUnit(state.doc.w)}" step="${stp}"><select id="docUnit" class="dstrail">${unitOpts}</select></div>
+      <div class="dsrow"><label>Height:</label><input type="number" id="docH" value="${toUnit(state.doc.h)}" step="${stp}"><span class="dstrail seg orientseg"><button id="orPort" class="${isLand?'':'on'}" title="Portrait"><svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="1"/></svg></button><button id="orLand" class="${isLand?'on':''}" title="Landscape"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1"/></svg></button></span></div>
+      <div class="dsrow"><label>Preset:</label><select id="docPreset">${DOCPRESETS.map((pr,i)=>`<option value="${i}">${pr.name}</option>`).join('')}</select><button class="lockbtn dstrail ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
+    </div>
+    <div class="geosec"><div class="geohead">Scale</div>
+      <div class="dsrow"><label>1 ${docUnit} =</label><input type="number" id="docScale" value="${state.doc.scale||1}" step="0.1" min="0.01"><span class="dstrail" style="color:var(--muted);font-size:11px;">${docUnit}</span></div>
+    </div>
+    <div class="geosec"><div class="geohead">Background</div>
+      <div class="dsrow"><select id="docBgMode">${['color','none'].map(v=>`<option value="${v}"${(transp?v==='none':v==='color')?' selected':''}>${v==='color'?'Color':'Transparent'}</option>`).join('')}</select></div>
+      <div class="dsswatch ${transp?'transp':''}" id="docBg" style="${transp?'':'background:'+bg}" title="Choose document color"></div>
+    </div>`;
     const w=box.querySelector('#docW'),h=box.querySelector('#docH');
     const setDoc=(nw,nh)=>{state.doc.w=Math.max(1,Math.round(nw));state.doc.h=Math.max(1,Math.round(nh));render();updateStatus();refreshPanels();zoomFit();pushHistory();};
-    w.onchange=()=>{let nw=Math.max(1,Math.round(+w.value||1));if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.h=Math.max(1,Math.round(nw/r));}state.doc.w=nw;render();updateStatus();refreshPanels();pushHistory();};
-    h.onchange=()=>{let nh=Math.max(1,Math.round(+h.value||1));if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.w=Math.max(1,Math.round(nh*r));}state.doc.h=nh;render();updateStatus();refreshPanels();pushHistory();};
+    w.onchange=()=>{let nw=fromUnit(w.value);if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.h=Math.max(1,Math.round(nw/r));}state.doc.w=nw;render();updateStatus();refreshPanels();pushHistory();};
+    h.onchange=()=>{let nh=fromUnit(h.value);if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.w=Math.max(1,Math.round(nh*r));}state.doc.h=nh;render();updateStatus();refreshPanels();pushHistory();};
+    box.querySelector('#docUnit').onchange=e=>{docUnit=e.target.value;localStorage.setItem('gs-unit',docUnit);refreshPanels();};
     box.querySelector('#szLock').onclick=()=>{sizeLocked=!sizeLocked;localStorage.setItem('gs-lock',sizeLocked?'1':'0');refreshPanels();};
     box.querySelector('#docPreset').onchange=e=>{const pr=DOCPRESETS[+e.target.value];if(!pr||!pr.w)return;let pw=pr.w,ph=pr.h;const curLand=state.doc.w>state.doc.h,pLand=pw>ph;if(curLand!==pLand){const t=pw;pw=ph;ph=t;}setDoc(pw,ph);};
     box.querySelector('#orPort').onclick=()=>{if(state.doc.w>state.doc.h)setDoc(state.doc.h,state.doc.w);};
     box.querySelector('#orLand').onclick=()=>{if(state.doc.h>state.doc.w)setDoc(state.doc.h,state.doc.w);};
+    const sc=box.querySelector('#docScale');sc.onchange=()=>{state.doc.scale=Math.max(0.01,+sc.value||1);drawRulers();pushHistory();};
+    const dbg=box.querySelector('#docBg'),mode=box.querySelector('#docBgMode');
+    mode.onchange=()=>{state.doc.bg=mode.value==='none'?'none':((state.doc.bg&&state.doc.bg!=='none')?state.doc.bg:'#ffffff');render();refreshPanels();pushHistory();};
+    dbg.onclick=()=>{if(state.doc.bg==='none'){state.doc.bg='#ffffff';dbg.classList.remove('transp');dbg.style.background='#ffffff';render();}openColorPicker(dbg,toHex(state.doc.bg||'#ffffff'),1,hex=>{state.doc.bg=hex;dbg.style.background=hex;render();},()=>{pushHistory();autosave();refreshPanels();});};
     return;}
   const multi=sels.length>1,s=sels[0],b=multi?null:shapeBBox(s);
   let extra='';
@@ -1154,10 +1200,29 @@ function fillGeometry(box){const sels=selShapes();
     if(s.type==='star')extra+=`<div class="row"><label>Inner</label><div class="ctl"><input type="range" id="pRatio" min="0.1" max="0.9" step="0.01" value="${s.starRatio}"></div></div>`;
     if(s.type==='text')extra+=`<div class="row"><label>Font</label><div class="ctl"><select id="tFont">${FONTS.map(f=>`<option value="${f}" ${s.fontFamily===f?'selected':''}>${f.split(',')[0]}</option>`).join('')}</select></div></div><div class="grid2"><div class="field"><span class="fl">Sz</span><input type="number" id="tSize" value="${Math.round(s.fontSize)}" min="4"></div><div class="field"><span class="fl">Wt</span><select id="tWeight">${['300','400','500','600','700','800'].map(w=>`<option ${s.fontWeight===w?'selected':''}>${w}</option>`).join('')}</select></div></div><div class="row"><label>Text</label><div class="ctl"><button class="chip" id="tEdit">Edit text…</button></div></div>`;
   }
+  const WICON='<svg viewBox="0 0 24 24"><path d="M3 12h18M5 8v8M19 8v8"/></svg>',HICON='<svg viewBox="0 0 24 24"><path d="M12 3v18M8 5h8M8 19h8"/></svg>',
+    SHX='<svg viewBox="0 0 24 24"><path d="M8 5h11l-3 14H5z"/></svg>',SHY='<svg viewBox="0 0 24 24"><path d="M5 8l14-3v11l-14 3z"/></svg>',
+    ROT='<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 11-2-4.9M19 4v4h-4"/></svg>';
   box.innerHTML=multi?`<div class="hint" style="padding:8px 12px;">${sels.length} objects selected. Move &amp; align together, or edit shared appearance.</div>`:`
-    <div class="georow"><div class="field"><span class="fl">X</span><input type="number" id="pX" value="${Math.round(b.x)}"></div><div class="field"><span class="fl">Y</span><input type="number" id="pY" value="${Math.round(b.y)}"></div><span></span></div>
-    <div class="georow"><div class="field"><span class="fl">W</span><input type="number" id="pW" value="${Math.round(b.w)}"></div><div class="field"><span class="fl">H</span><input type="number" id="pH" value="${Math.round(b.h)}"></div><button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
-    <div class="georow"><div class="field"><span class="fl">↻</span><input type="number" id="pRot" value="${Math.round(s.rot||0)}"></div><div class="field"><span class="fl">⇔</span><input type="number" id="pShear" value="${Math.round(s.shear||0)}"></div><span></span></div>
+    <div class="geo2col">
+      <div class="geocol"><div class="geohead">Position</div>
+        <div class="geofield"><span class="gi">X</span><input type="number" id="pX" value="${Math.round(b.x)}"><span class="unit">px</span></div>
+        <div class="geofield"><span class="gi">Y</span><input type="number" id="pY" value="${Math.round(b.y)}"><span class="unit">px</span></div>
+      </div>
+      <div class="geocol"><div class="geohead">Size</div>
+        <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"></div>
+        <div class="geofield"><span class="gi">${HICON}</span><input type="number" id="pH" value="${Math.round(b.h)}"><button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
+      </div>
+    </div>
+    <div class="geo2col">
+      <div class="geocol"><div class="geohead">Shear</div>
+        <div class="geofield"><span class="gi">${SHX}</span><input type="number" id="pShear" value="${Math.round(s.shear||0)}"><span class="unit">°</span></div>
+        <div class="geofield"><span class="gi">${SHY}</span><input type="number" id="pShearY" value="${Math.round(s.shearY||0)}"><span class="unit">°</span></div>
+      </div>
+      <div class="geocol"><div class="geohead">Rotation</div>
+        <div class="geofield"><span class="gi">${ROT}</span><input type="number" id="pRot" value="${Math.round(s.rot||0)}"><span class="unit">°</span></div>
+      </div>
+    </div>
     ${extra}`;
   box.insertAdjacentHTML('beforeend',`<div class="align-grid">
     <button data-al="left" title="Align left"><svg viewBox="0 0 24 24"><path d="M4 4v16M8 8h9M8 16h5"/></svg></button>
@@ -1179,6 +1244,7 @@ function fillGeometry(box){const sels=selShapes();
     const szl=g('szLock');if(szl)szl.onclick=()=>{sizeLocked=!sizeLocked;localStorage.setItem('gs-lock',sizeLocked?'1':'0');refreshPanels();};
     pr.onchange=()=>{s.rot=+pr.value||0;pushHistory();render();refreshPanels();};
     psh.onchange=()=>{s.shear=Math.max(-80,Math.min(80,+psh.value||0));pushHistory();render();refreshPanels();};
+    const psy=g('pShearY');if(psy)psy.onchange=()=>{s.shearY=Math.max(-80,Math.min(80,+psy.value||0));pushHistory();render();refreshPanels();};
     const rx=g('pRx');if(rx)rx.onchange=()=>{s.rx=Math.max(0,+rx.value);pushHistory();render();};
     const sd=g('pSides');if(sd)sd.onchange=()=>{s.sides=Math.max(3,Math.min(60,+sd.value));pushHistory();render();};
     const rt=g('pRatio');if(rt){rt.oninput=()=>{s.starRatio=+rt.value;render();};rt.onchange=()=>pushHistory();}
@@ -1310,9 +1376,30 @@ function fillAppearance(box){const s=curStyle();
 
 function ctxMenu(e,items){e.preventDefault();e.stopPropagation();document.querySelectorAll('.ctxmenu').forEach(m=>m.remove());
   const m=document.createElement('div');m.className='ctxmenu';
-  for(const it of items){const b=document.createElement('button');b.textContent=it.label;if(it.danger)b.className='danger';b.onclick=()=>{m.remove();document.removeEventListener('pointerdown',onDoc,true);it.fn();};m.append(b);}
+  const close=()=>{m.remove();document.removeEventListener('pointerdown',onDoc,true);};
+  for(const it of items){
+    if(it.sep){const d=document.createElement('div');d.className='ctxsep';m.append(d);continue;}
+    const b=document.createElement('button');b.textContent=it.label;if(it.danger)b.className='danger';
+    if(it.disabled)b.disabled=true;else b.onclick=()=>{close();it.fn();};
+    m.append(b);}
   document.body.append(m);const rc=m.getBoundingClientRect();let x=e.clientX,y=e.clientY;if(x+rc.width>innerWidth-6)x=innerWidth-rc.width-6;if(y+rc.height>innerHeight-6)y=innerHeight-rc.height-6;m.style.left=x+'px';m.style.top=y+'px';
-  const onDoc=ev=>{if(!m.contains(ev.target)){m.remove();document.removeEventListener('pointerdown',onDoc,true);}};setTimeout(()=>document.addEventListener('pointerdown',onDoc,true),0);}
+  const onDoc=ev=>{if(!m.contains(ev.target))close();};setTimeout(()=>document.addEventListener('pointerdown',onDoc,true),0);}
+function objectContextMenu(e){
+  const id=targetId(e.target)||(hitTest(toSVG(e.clientX,e.clientY))||{}).id;
+  if(id){if(!state.sel.includes(id)){state.sel=groupMembers(id);syncStyleFromSel();render();refreshPanels();}
+    const hasGroup=selShapes().some(s=>s.groupId),locked=selShapes().some(s=>s.locked);
+    ctxMenu(e,[
+      {label:'Copy',fn:copySel},{label:'Paste',disabled:!clipboard.length,fn:pasteClip},{label:'Duplicate',fn:duplicateSel},{label:'Delete',danger:true,fn:deleteSel},
+      {sep:true},
+      {label:'Bring to Front',fn:()=>arrange('front')},{label:'Bring Forward',disabled:state.sel.length!==1,fn:()=>moveLayer(1)},{label:'Send Backward',disabled:state.sel.length!==1,fn:()=>moveLayer(-1)},{label:'Send to Back',fn:()=>arrange('back')},
+      {sep:true},
+      {label:'Group',disabled:state.sel.length<2,fn:groupSel},{label:'Ungroup',disabled:!hasGroup,fn:ungroupSel},{label:'Lock',fn:lockSel}
+    ]);
+  }else{
+    ctxMenu(e,[{label:'Paste',disabled:!clipboard.length,fn:pasteClip},{label:'Select All',fn:()=>{state.sel=state.shapes.filter(s=>shapeInteractive(s)).map(s=>s.id);syncStyleFromSel();render();refreshPanels();}},{sep:true},{label:'Unlock All',fn:unlockAll}]);
+  }
+}
+stage.addEventListener('contextmenu',objectContextMenu);
 function editSwatch(i,anchor){openColorPicker(anchor,toHex(customSwatches[i]),1,hex=>{customSwatches[i]=hex;anchor.style.background=hex;anchor.title=hex;},()=>{saveSwatches();refreshPanels();});setCPMode('color');}
 function newGradient(){const id='cg'+(uidc++);customGradients.push({id,stops:[['#3d8bff',0],['#1b52c9',1]],angle:0,_new:true});gradEditId=id;gradSelStop=0;saveGradients();refreshPanels();}
 function editGradient(id){gradEditId=id;gradSelStop=0;refreshPanels();}
@@ -1632,7 +1719,7 @@ function buildExportRegion(region,whiteBg){
   const defs=el('defs',{});
   for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}
   svg.append(defs);
-  if(whiteBg)svg.append(el('rect',{x:bb.x,y:bb.y,width:bb.w,height:bb.h,fill:'#ffffff'}));
+  if(whiteBg)svg.append(el('rect',{x:bb.x,y:bb.y,width:bb.w,height:bb.h,fill:state.doc.bg||'#ffffff'}));
   const list=region==='selection'?renderOrder().filter(s=>state.sel.includes(s.id)):renderOrder().filter(shapeVisible);
   for(const s of list){if(fillIsGrad(s))appendShapeGrad(defs,'fillg_'+s.id,s.fillGrad);svg.append(buildShapeEl(s,defs));}
   return{svg:new XMLSerializer().serializeToString(svg),w:bb.w,h:bb.h};
