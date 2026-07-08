@@ -21,6 +21,9 @@
   /* Top bar */
   #topbar{display:flex;align-items:center;gap:6px;height:42px;padding:0 10px;background:var(--toolbar);border-bottom:1px solid var(--line);flex:0 0 auto;}
   #topbar .brand{font-weight:700;font-size:14px;margin-right:6px;color:#fff;}
+  #docName{margin-left:auto;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted);padding:3px 9px;border-radius:6px;border:1px solid transparent;cursor:text;outline:none;}
+  #docName:hover{color:var(--text);background:#ffffff0d;}
+  #docName:focus{color:#fff;background:var(--panel2);border-color:var(--accent);cursor:text;}
   #topbar .brand small{color:var(--accent);font-weight:600;}
   .tb-group{display:flex;align-items:center;gap:2px;padding:0 6px;border-left:1px solid var(--line);height:24px;}
   .tb-group:first-of-type{border-left:none;}
@@ -390,8 +393,9 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 70</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 72</span></div>
     <div class="menubar" id="menubar"></div>
+    <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
 
   <div id="infobar">
@@ -534,7 +538,7 @@ const FONTS=['Helvetica, Arial, sans-serif','Arial, sans-serif','Georgia, serif'
 //////////////////// STATE ////////////////////
 const SVGNS="http://www.w3.org/2000/svg";
 let state={
-  doc:{w:800,h:600},shapes:[],layers:[],activeLayer:null,sel:[],tool:'select',
+  doc:{w:800,h:600,name:'Untitled'},shapes:[],layers:[],activeLayer:null,sel:[],tool:'select',
   zoom:1,panX:80,panY:60,
   style:{fill:'#5b8def',stroke:'#1f2d4d',strokeWidth:2,opacity:1,fillOn:true,strokeOn:true,fillOpacity:1,strokeOpacity:1,strokePos:'center',
     cap:'round',join:'round',miter:4,dash:'',blend:'normal',
@@ -806,7 +810,7 @@ function distToSeg(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(!l2)retu
 function snapshot(){return JSON.stringify({doc:state.doc,shapes:state.shapes,layers:state.layers,activeLayer:state.activeLayer});}
 function pushHistory(){history.push(committed);if(history.length>200)history.shift();committed=snapshot();future=[];autosave();updateUndoBtns();}
 function resetHistory(){history=[];future=[];committed=snapshot();autosave();updateUndoBtns();}
-function restore(str){const o=JSON.parse(str);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();state.sel=state.sel.filter(id=>state.shapes.some(s=>s.id===id));render();refreshPanels();}
+function restore(str){const o=JSON.parse(str);state.doc=o.doc;if(!state.doc.name)state.doc.name='Untitled';state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();state.sel=state.sel.filter(id=>state.shapes.some(s=>s.id===id));render();refreshPanels();updateDocName();}
 function undo(){if(!history.length)return;future.push(committed);const prev=history.pop();committed=prev;restore(prev);updateUndoBtns();autosave();}
 function redo(){if(!future.length)return;history.push(committed);const nxt=future.pop();committed=nxt;restore(nxt);updateUndoBtns();autosave();}
 function updateUndoBtns(){const u=document.querySelector('[data-act="undo"]'),r=document.querySelector('[data-act="redo"]');if(u)u.classList.toggle('disabled',!history.length);if(r)r.classList.toggle('disabled',!future.length);}
@@ -1541,10 +1545,10 @@ function download(name,blob){const a=document.createElement('a');a.href=URL.crea
 function mimeFor(ext){return {png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',svg:'image/svg+xml',pdf:'application/pdf',json:'application/json'}[(ext||'').toLowerCase()]||'application/octet-stream';}
 async function saveBlob(blob,name){
   if(window.showSaveFilePicker){
-    try{const ext=(name.split('.').pop()||'');const h=await window.showSaveFilePicker({suggestedName:name,types:[{description:ext.toUpperCase()+' file',accept:{[mimeFor(ext)]:['.'+ext.toLowerCase()]}}]});const w=await h.createWritable();await w.write(blob);await w.close();return true;}
+    try{const ext=(name.split('.').pop()||'');const h=await window.showSaveFilePicker({suggestedName:name,types:[{description:ext.toUpperCase()+' file',accept:{[mimeFor(ext)]:['.'+ext.toLowerCase()]}}]});const w=await h.createWritable();await w.write(blob);await w.close();return h.name||name;}
     catch(err){if(err&&err.name==='AbortError')return false;/* fall through to download on other errors */}
   }
-  download(name,blob);return true;
+  download(name,blob);return name;
 }
 function exportSVG(){download('graphic.svg',new Blob([buildExportSVG()],{type:'image/svg+xml'}));}
 function exportPNG(){const svg=buildExportSVG(),img=new Image(),scale=2,url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
@@ -1616,13 +1620,19 @@ function runExport(){
   img.onerror=()=>{alert('Export failed.');};
   img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
 }
-function saveDoc(){saveBlob(new Blob([JSON.stringify({version:4,doc:state.doc,layers:state.layers,activeLayer:state.activeLayer,shapes:state.shapes,swatches:customSwatches,gradients:customGradients})],{type:'application/json'}),'graphic.json');}
+async function saveDoc(){const nm=((state.doc.name||'Untitled').replace(/[\\/:*?"<>|]/g,'_'))+'.json';
+  const saved=await saveBlob(new Blob([JSON.stringify({version:4,doc:state.doc,layers:state.layers,activeLayer:state.activeLayer,shapes:state.shapes,swatches:customSwatches,gradients:customGradients})],{type:'application/json'}),nm);
+  if(saved){const base=String(saved).replace(/\.json$/i,'').trim();if(base){state.doc.name=base;updateDocName();autosave();}}}
+const docNameEl=document.getElementById('docName');
+function updateDocName(){if(docNameEl&&document.activeElement!==docNameEl)docNameEl.textContent=state.doc.name||'Untitled';}
+docNameEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();docNameEl.blur();}else if(e.key==='Escape'){e.preventDefault();updateDocName();docNameEl.blur();}});
+docNameEl.addEventListener('blur',()=>{const n=(docNameEl.textContent||'').replace(/\s+/g,' ').trim()||'Untitled';state.doc.name=n;docNameEl.textContent=n;autosave();});
 function mergeLibraries(o){
   if(Array.isArray(o.gradients)){for(const g of o.gradients){const i=customGradients.findIndex(x=>x.id===g.id);if(i>=0)customGradients[i]=g;else customGradients.push(g);}saveGradients();}
   if(Array.isArray(o.swatches)){for(const c of o.swatches)if(!customSwatches.includes(c))customSwatches.push(c);saveSwatches();}}
 function openFile(){document.getElementById('fileInput').click();}
-document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();mergeLibraries(o);}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}state.sel=[];resetHistory();render();refreshPanels();zoomFit();}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
-function newDoc(){if(state.shapes.length&&!confirm('Start a new document? Unsaved work will be lost.'))return;state.shapes=[];state.sel=[];state.layers=[];state.activeLayer=null;expandedLayers=null;ensureLayers();resetHistory();render();refreshPanels();zoomFit();}
+document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();mergeLibraries(o);state.doc.name=f.name.replace(/\.json$/i,'')||state.doc.name||'Untitled';}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}state.sel=[];resetHistory();render();refreshPanels();zoomFit();updateDocName();}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
+function newDoc(){if(state.shapes.length&&!confirm('Start a new document? Unsaved work will be lost.'))return;state.shapes=[];state.sel=[];state.layers=[];state.activeLayer=null;expandedLayers=null;state.doc.name='Untitled';ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
 
 //////////////////// KEYBOARD ////////////////////
 window.addEventListener('keydown',e=>{
@@ -1705,7 +1715,8 @@ document.getElementById('canvasModal').onclick=e=>{if(e.target.id==='canvasModal
 function init(){buildStage();buildTools();buildMenus();buildPanels();setToolUI();
   const saved=localStorage.getItem('graphic-studio-doc');
   if(saved){try{const o=JSON.parse(saved);if(o.shapes&&o.shapes.length){state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;uidc=state.shapes.length+2;}else seedDemo();}catch(_){seedDemo();}}else seedDemo();
-  ensureLayers();resetHistory();render();refreshPanels();zoomFit();}
+  if(!state.doc.name)state.doc.name='Untitled';
+  ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
 function seedDemo(){const bg=luid(),ct=luid();
   state.layers=[{id:bg,name:'Background',visible:true,locked:false},{id:ct,name:'Content',visible:true,locked:false}];
   state.activeLayer=ct;expandedLayers=null;
