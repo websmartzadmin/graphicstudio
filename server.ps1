@@ -8,7 +8,7 @@ while ($listener.IsListening) {
   try {
     $ctx = $listener.GetContext()
     $path = [System.Uri]::UnescapeDataString($ctx.Request.Url.LocalPath).TrimStart('/')
-    if ([string]::IsNullOrEmpty($path)) { $path = 'graphic-studio.html' }
+    if ([string]::IsNullOrEmpty($path)) { $path = 'index.html' }
     $file = Join-Path $root $path
     if (Test-Path $file -PathType Leaf) {
       $bytes = [System.IO.File]::ReadAllBytes($file)
