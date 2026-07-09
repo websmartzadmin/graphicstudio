@@ -447,7 +447,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 110</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 111</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1809,8 +1809,27 @@ function updateStatus(){
 }
 
 //////////////////// EXPORT / IO ////////////////////
+// ---------- FONT EMBEDDING FOR EXPORT/PRINT ----------
+// Google web fonts must be inlined as base64 @font-face, otherwise a rasterized
+// or standalone SVG can't load them and text falls back to a generic face.
+const WEBFONT_WEIGHTS={'Roboto':[400,700],'Open Sans':[400,700],'Lato':[400,700],'Montserrat':[400,700],'Poppins':[400,700],'Raleway':[400,700],'Nunito':[400,700],'Inter':[400,700],'Oswald':[400,700],'Merriweather':[400,700],'Playfair Display':[400,700],'Roboto Mono':[400,700],'Bebas Neue':[400],'Anton':[400],'Pacifico':[400],'Lobster':[400],'Dancing Script':[400,700]};
+const fontEmbedCache={};
+let _exportFontStyle='';
+function abToB64(buf){let bin='';const bytes=new Uint8Array(buf),chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));return btoa(bin);}
+function usedWebFonts(shapes){const out={};for(const s of shapes){if(s.type!=='text'||s.visible===false)continue;const fam=(s.fontFamily||'').split(',')[0].trim(),avail=WEBFONT_WEIGHTS[fam];if(!avail)continue;let w=parseInt(s.fontWeight)||400;w=(w>=600&&avail.includes(700))?700:400;if(!avail.includes(w))w=avail[0];out[fam+'|'+w]={fam,w};}return Object.values(out);}
+async function fetchFontFace(fam,w){const key=fam+'|'+w;if(fontEmbedCache[key]!=null)return fontEmbedCache[key];
+  try{const css=await (await fetch('https://fonts.googleapis.com/css2?family='+encodeURIComponent(fam)+':wght@'+w+'&display=swap')).text();
+    const re=/\/\*\s*([\w-]+)\s*\*\/\s*@font-face\s*\{([^}]*)\}/g;let m,first=null,latin=null;
+    while(m=re.exec(css)){const um=m[2].match(/url\((https:\/\/[^)]+\.woff2)\)/);if(!um)continue;if(!first)first=um[1];if(m[1]==='latin'){latin=um[1];break;}}
+    const woff=latin||first;if(!woff){fontEmbedCache[key]='';return '';}
+    const b64=abToB64(await (await fetch(woff)).arrayBuffer());
+    const face="@font-face{font-family:'"+fam+"';font-style:normal;font-weight:"+w+";src:url(data:font/woff2;base64,"+b64+") format('woff2');}";
+    fontEmbedCache[key]=face;return face;
+  }catch(_){fontEmbedCache[key]='';return '';}}
+async function ensureExportFonts(shapes){const used=usedWebFonts(shapes||state.shapes);const faces=await Promise.all(used.map(u=>fetchFontFace(u.fam,u.w)));_exportFontStyle=faces.filter(Boolean).join('\n');return _exportFontStyle;}
+function appendFontStyle(defs){if(_exportFontStyle){const st=el('style',{type:'text/css'});st.textContent=_exportFontStyle;defs.append(st);}}
 function buildExportSVG(){const svg=el('svg',{xmlns:SVGNS,width:state.doc.w,height:state.doc.h,viewBox:`0 0 ${state.doc.w} ${state.doc.h}`});
-  const defs=el('defs',{});for(const g of GRADIENTS){const lg=el('linearGradient',{id:g.id,x1:0,y1:0,x2:0,y2:1});for(const[c,o] of g.stops)lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}svg.append(defs);
+  const defs=el('defs',{});appendFontStyle(defs);for(const g of GRADIENTS){const lg=el('linearGradient',{id:g.id,x1:0,y1:0,x2:0,y2:1});for(const[c,o] of g.stops)lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}svg.append(defs);
   svg.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'#ffffff'}));
   for(const s of state.shapes){if(s.visible===false)continue;svg.append(buildShapeEl(s,defs));}
   return new XMLSerializer().serializeToString(svg);}
@@ -1834,8 +1853,9 @@ function buildPdfPlaced(jpeg,imgW,imgH,pageW,pageH,dx,dy,dw,dh){
   put(5,'<</Length '+content.length+'>>\nstream\n'+content+'\nendstream');
   const xref=out.length;out+='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)out+=String(off[i]).padStart(10,'0')+' 00000 n \n';
   out+='trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n'+xref+'\n%%EOF';return out;}
-function doPrint(){
+async function doPrint(){
   const dpi=+document.getElementById('prDpi').value||300,paper=document.getElementById('prPaper').value,orient=document.getElementById('prOrient').value,place=document.getElementById('prPlace').value;
+  await ensureExportFonts(state.shapes);
   const S=Math.max(1,dpi/96),reg=buildExportRegion('canvas',true);
   const docPtW=state.doc.w*72/96,docPtH=state.doc.h*72/96;
   closePrint();
@@ -1872,8 +1892,8 @@ async function saveBlob(blob,name){
   }
   download(name,blob);return name;
 }
-function exportSVG(){download('graphic.svg',new Blob([buildExportSVG()],{type:'image/svg+xml'}));}
-function exportPNG(){const svg=buildExportSVG(),img=new Image(),scale=2,url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
+async function exportSVG(){await ensureExportFonts(state.shapes);download('graphic.svg',new Blob([buildExportSVG()],{type:'image/svg+xml'}));}
+async function exportPNG(){await ensureExportFonts(state.shapes);const svg=buildExportSVG(),img=new Image(),scale=2,url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
   img.onload=()=>{const cv=document.createElement('canvas');cv.width=state.doc.w*scale;cv.height=state.doc.h*scale;const ctx=cv.getContext('2d');ctx.scale(scale,scale);ctx.drawImage(img,0,0);cv.toBlob(b=>download('graphic.png',b));};img.onerror=()=>alert('PNG export failed.');img.src=url;}
 // ---- Export dialog (canvas / all / selection -> PNG, JPEG, SVG, PDF) ----
 function regionBBox(region){
@@ -1886,7 +1906,7 @@ function regionBBox(region){
 function buildExportRegion(region,whiteBg){
   const bb=regionBBox(region);
   const svg=el('svg',{xmlns:SVGNS,width:bb.w,height:bb.h,viewBox:`${bb.x} ${bb.y} ${bb.w} ${bb.h}`});
-  const defs=el('defs',{});
+  const defs=el('defs',{});appendFontStyle(defs);
   for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}
   if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(#docbg')===0&&state.doc.bgGrad)appendShapeGrad(defs,'docbg',state.doc.bgGrad);
   svg.append(defs);
@@ -1931,9 +1951,10 @@ function updateExportUI(){const f=exFmt,raster=f!=='svg';
   const eff=(+exV('exScale')||100)/100,bb=regionBBox(exV('exRegion'));
   document.getElementById('exWH').textContent='w: '+Math.round(bb.w*eff)+' px   h: '+Math.round(bb.h*eff)+' px';
   document.getElementById('exQVal').textContent=Math.round(document.getElementById('exQuality').value*100)+'%';}
-function runExport(){
+async function runExport(){
   const region=exV('exRegion'),format=exFmt,dpi=+exV('exDpi')||96,eff=(+exV('exScale')||100)/100,quality=+document.getElementById('exQuality').value,bg=exV('exBg');
   const whiteBg=region==='canvas'||format==='jpeg'||format==='pdf'||bg==='white';
+  await ensureExportFonts(region==='selection'?selShapes():state.shapes);
   const{svg,w,h}=buildExportRegion(region,whiteBg);
   if(format==='svg'){saveBlob(new Blob([svg],{type:'image/svg+xml'}),'graphic.svg');closeExport();return;}
   const img=new Image();
