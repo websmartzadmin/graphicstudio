@@ -246,10 +246,17 @@
   .btnrow{display:flex;gap:6px;padding:6px 12px;flex-wrap:wrap;}
   .btnrow button{flex:1;min-width:56px;background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:6px;border-radius:6px;cursor:pointer;font-size:11px;}
   .btnrow button:hover{background:var(--hover);}
-  .align-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:6px 12px;}
-  .align-grid button{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;height:28px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .geofield .lockpad{width:24px;flex:0 0 auto;}
+  .geosec{padding:2px 12px 0;margin-top:8px;margin-bottom:6px;}
+  .align-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:0 12px 4px;}
+  .align-grid button{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;height:30px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .align-grid button:hover{background:var(--hover);color:var(--text);}
   .align-grid button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .geoactions{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px 12px;}
+  .geoactions button{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:7px 6px;border-radius:6px;cursor:pointer;font-size:11px;}
+  .geoactions button:hover{background:var(--hover);}
+  .geoactions button.danger{color:#ff8080;}
+  .geoactions button.danger:hover{background:#e5484d22;border-color:#e5484d99;color:#ff9b9b;}
   .dashrow{display:flex;gap:5px;padding:5px 12px;}
   .dashrow .db{flex:1;height:24px;border:1px solid var(--line2);border-radius:5px;background:var(--panel2);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .dashrow .db.on{border-color:var(--accent);background:var(--active);}
@@ -447,7 +454,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 111</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 113</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1330,7 +1337,7 @@ function fillDocument(box){const isLand=state.doc.w>state.doc.h,transp=state.doc
 }
 function fillGeometry(box){const sels=selShapes();
   if(!sels.length){box.innerHTML='<div class="hint" style="padding:12px;line-height:1.5;">No selection.<br>Select an object to edit its <b>Position</b> &amp; <b>Size</b>, or use the <b>Document</b> tab for canvas settings.</div>';return;}
-  const multi=sels.length>1,s=sels[0],b=multi?null:shapeBBox(s);
+  const multi=sels.length>1,s=sels[0],b=multi?selWorldBBox():shapeBBox(s);
   let extra='';
   if(!multi){
     if(s.type==='rect')extra=`<div class="row"><label>Corner</label><div class="ctl"><input type="number" id="pRx" value="${Math.round(s.rx||0)}" min="0"></div></div>`;
@@ -1341,17 +1348,19 @@ function fillGeometry(box){const sels=selShapes();
   const WICON='<svg viewBox="0 0 24 24"><path d="M3 12h18M5 8v8M19 8v8"/></svg>',HICON='<svg viewBox="0 0 24 24"><path d="M12 3v18M8 5h8M8 19h8"/></svg>',
     SHX='<svg viewBox="0 0 24 24"><path d="M8 5h11l-3 14H5z"/></svg>',SHY='<svg viewBox="0 0 24 24"><path d="M5 8l14-3v11l-14 3z"/></svg>',
     ROT='<svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 11-2-4.9M19 4v4h-4"/></svg>';
-  box.innerHTML=multi?`<div class="hint" style="padding:8px 12px;">${sels.length} objects selected. Move &amp; align together, or edit shared appearance.</div>`:`
+  const posSize=`
     <div class="geo2col">
       <div class="geocol"><div class="geohead">Position</div>
         <div class="geofield"><span class="gi">X</span><input type="number" id="pX" value="${Math.round(b.x)}"><span class="unit">px</span></div>
         <div class="geofield"><span class="gi">Y</span><input type="number" id="pY" value="${Math.round(b.y)}"><span class="unit">px</span></div>
       </div>
       <div class="geocol"><div class="geohead">Size</div>
-        <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"></div>
+        <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"><span class="lockpad"></span></div>
         <div class="geofield"><span class="gi">${HICON}</span><input type="number" id="pH" value="${Math.round(b.h)}"><button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
       </div>
-    </div>
+    </div>`;
+  box.innerHTML=multi?`<div class="hint" style="padding:6px 12px 3px;">${sels.length} objects selected — group position &amp; size.</div>${posSize}`:`
+    ${posSize}
     <div class="geo2col">
       <div class="geocol"><div class="geohead">Shear</div>
         <div class="geofield"><span class="gi">${SHX}</span><input type="number" id="pShear" value="${Math.round(s.shear||0)}"><span class="unit">°</span></div>
@@ -1362,16 +1371,28 @@ function fillGeometry(box){const sels=selShapes();
       </div>
     </div>
     ${extra}`;
-  box.insertAdjacentHTML('beforeend',`<div class="align-grid">
+  box.insertAdjacentHTML('beforeend',`<div class="geohead geosec">Align</div><div class="align-grid">
     <button data-al="left" title="Align left"><svg viewBox="0 0 24 24"><path d="M4 4v16M8 8h9M8 16h5"/></svg></button>
     <button data-al="hcenter" title="Center H"><svg viewBox="0 0 24 24"><path d="M12 4v16M7 8h10M9 16h6"/></svg></button>
     <button data-al="right" title="Align right"><svg viewBox="0 0 24 24"><path d="M20 4v16M7 8h9M12 16h5"/></svg></button>
     <button data-al="top" title="Align top"><svg viewBox="0 0 24 24"><path d="M4 4h16M8 8v9M16 8v5"/></svg></button>
     <button data-al="vcenter" title="Center V"><svg viewBox="0 0 24 24"><path d="M4 12h16M8 7v10M16 9v6"/></svg></button>
     <button data-al="bottom" title="Align bottom"><svg viewBox="0 0 24 24"><path d="M4 20h16M8 7v9M16 12v5"/></svg></button>
-  </div><div class="btnrow"><button data-ar="front">To Front</button><button data-ar="back">To Back</button><button data-ar="dup">Duplicate</button><button data-ar="del">Delete</button></div>`);
+  </div>
+  <div class="geoactions">
+    <button data-ar="front">To Front</button><button data-ar="back">To Back</button>
+    <button data-ar="dup">Duplicate</button><button data-ar="del" class="danger">Delete</button>
+  </div>`);
   const g=id=>box.querySelector('#'+id);
-  if(!multi){
+  const szl=g('szLock');if(szl)szl.onclick=()=>{sizeLocked=!sizeLocked;localStorage.setItem('gs-lock',sizeLocked?'1':'0');refreshPanels();};
+  if(multi){
+    const px=g('pX'),py=g('pY'),pw=g('pW'),ph=g('pH');
+    px.onchange=()=>{const b=selWorldBBox(),dx=(+px.value)-b.x;for(const sh of selShapes())translateShape(sh,dx,0);pushHistory();render();refreshPanels();};
+    py.onchange=()=>{const b=selWorldBBox(),dy=(+py.value)-b.y;for(const sh of selShapes())translateShape(sh,0,dy);pushHistory();render();refreshPanels();};
+    const scaleGroup=(nw,nh)=>{const b=selWorldBBox(),sx=nw/b.w,sy=nh/b.h;for(const sh of selShapes()){const sb=shapeBBox(sh);setShapeBBox(sh,{x:b.x+(sb.x-b.x)*sx,y:b.y+(sb.y-b.y)*sy,w:Math.max(1,sb.w*sx),h:Math.max(1,sb.h*sy)});}render();};
+    pw.onchange=()=>{const b=selWorldBBox();let nw=Math.max(1,+pw.value),nh=sizeLocked?b.h*(nw/b.w):b.h;scaleGroup(nw,nh);pushHistory();refreshPanels();};
+    ph.onchange=()=>{const b=selWorldBBox();let nh=Math.max(1,+ph.value),nw=sizeLocked?b.w*(nh/b.h):b.w;scaleGroup(nw,nh);pushHistory();refreshPanels();};
+  }else{
     const px=g('pX'),py=g('pY'),pw=g('pW'),ph=g('pH'),pr=g('pRot'),psh=g('pShear');
     px.onchange=()=>{translateShape(s,(+px.value)-shapeBBox(s).x,0);pushHistory();render();refreshPanels();};
     py.onchange=()=>{translateShape(s,0,(+py.value)-shapeBBox(s).y);pushHistory();render();refreshPanels();};
@@ -1379,7 +1400,6 @@ function fillGeometry(box){const sels=selShapes();
     pw.oninput=doPW;pw.onchange=()=>{doPW();pushHistory();refreshPanels();};
     const doPH=()=>{const b=shapeBBox(s);let nh=Math.max(1,+ph.value),nw=b.w;if(sizeLocked){const r=b.w/b.h;nw=Math.max(1,nh*r);}setShapeBBox(s,{x:b.x,y:b.y,w:nw,h:nh});render();};
     ph.oninput=doPH;ph.onchange=()=>{doPH();pushHistory();refreshPanels();};
-    const szl=g('szLock');if(szl)szl.onclick=()=>{sizeLocked=!sizeLocked;localStorage.setItem('gs-lock',sizeLocked?'1':'0');refreshPanels();};
     pr.onchange=()=>{s.rot=+pr.value||0;pushHistory();render();refreshPanels();};
     psh.onchange=()=>{s.shear=Math.max(-80,Math.min(80,+psh.value||0));pushHistory();render();refreshPanels();};
     const psy=g('pShearY');if(psy)psy.onchange=()=>{s.shearY=Math.max(-80,Math.min(80,+psy.value||0));pushHistory();render();refreshPanels();};
