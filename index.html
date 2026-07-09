@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Graphic Studio</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b7cff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Nunito:wght@400;700&family=Inter:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Bebas+Neue&family=Anton&family=Pacifico&family=Lobster&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
@@ -207,6 +211,10 @@
   .dsrow select.dstrail{max-width:86px;flex:0 0 auto;}
   .dsswatch{width:60px;height:42px;border-radius:5px;border:1px solid var(--line2);cursor:pointer;margin-top:4px;box-shadow:inset 0 0 0 1px #0003;}
   .dsswatch.transp{background:repeating-conic-gradient(#b8b8b8 0 25%,#fff 0 50%) 50%/14px 14px;}
+  .libtargetrow{display:flex;align-items:center;gap:8px;padding:8px 12px 2px;}
+  .libtargetlbl{font-size:11px;color:var(--muted);}
+  .seg.libtarget{flex:1;}
+  .seg.libtarget button{font-size:11px;padding:5px 0;}
   #fgStopPos{width:50px;flex:0 0 auto;}
   #fgStopDel{flex:0 0 auto;background:var(--panel);border:1px solid var(--line2);color:var(--muted);border-radius:4px;width:26px;height:24px;cursor:pointer;}
   #fgStopDel:disabled{opacity:.35;cursor:default;}
@@ -421,7 +429,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 86</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 87</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -592,6 +600,7 @@ let lidc=1;const luid=()=>'L'+(lidc++);
 let collapsedLayers=new Set();
 let sizeLocked=localStorage.getItem('gs-lock')==='1';
 let docUnit=localStorage.getItem('gs-unit')||'px';
+let libTarget='fill';
 const UNIT_PX={px:1,in:96,cm:96/2.54,mm:96/25.4};
 const toUnit=px=>docUnit==='px'?Math.round(px):Math.round(px/UNIT_PX[docUnit]*1000)/1000;
 const fromUnit=v=>Math.max(1,Math.round((+v||0)*UNIT_PX[docUnit]));
@@ -1451,17 +1460,19 @@ function renderGradEditor(box,g){
   q('.gCancel').onclick=()=>closeGradEditor(true);
   redraw();
 }
+function applyLibColor(c){applyStyle(libTarget,c,false);if(libTarget==='stroke'){for(const o of styleTargets())if(!(o.strokeWidth>0))o.strokeWidth=1;if(!(state.style.strokeWidth>0))state.style.strokeWidth=1;}applyStyle(libTarget+'On',true,true);}
 function fillStyles(box){const lbl='padding:6px 12px 2px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;';
-  const tile=(bg,title)=>`<div class="st" style="background:${bg}"${title?` title="${title}"`:''}></div>`;
-  box.innerHTML=`<div style="${lbl}">Solid Colors</div><div class="styles-grid" id="stSolids"></div>
-    <div style="${lbl}">Gradients <span style="text-transform:none;color:var(--muted);opacity:.7;">— click apply · right-click custom to edit/delete</span></div><div class="styles-grid" id="stGrads"></div>
+  box.innerHTML=`<div class="libtargetrow"><span class="libtargetlbl">Apply to:</span><div class="seg libtarget"><button data-lt="fill" class="${libTarget==='fill'?'on':''}">Fill</button><button data-lt="stroke" class="${libTarget==='stroke'?'on':''}">Stroke</button></div></div>
+    <div style="${lbl}">Solid Colors</div><div class="styles-grid" id="stSolids"></div>
+    <div style="${lbl}">Gradients <span style="text-transform:none;color:var(--muted);opacity:.7;">— fill only · right-click custom to edit/delete</span></div><div class="styles-grid" id="stGrads"></div>
     <div style="${lbl}">My Swatches <span style="text-transform:none;color:var(--muted);opacity:.7;">— click apply · right-click delete</span></div><div class="styles-grid" id="stCustom"></div>`;
-  const sol=box.querySelector('#stSolids');for(const c of SOLIDS){const d=document.createElement('div');d.className='st';d.style.background=c;d.title=c;d.onclick=()=>{applyStyle('fill',c);applyStyle('fillOn',true,true);};sol.append(d);}
+  box.querySelectorAll('[data-lt]').forEach(b=>b.onclick=()=>{libTarget=b.dataset.lt;box.querySelectorAll('[data-lt]').forEach(x=>x.classList.toggle('on',x.dataset.lt===libTarget));});
+  const sol=box.querySelector('#stSolids');for(const c of SOLIDS){const d=document.createElement('div');d.className='st';d.style.background=c;d.title=c;d.onclick=()=>applyLibColor(c);sol.append(d);}
   const gr=box.querySelector('#stGrads');
   for(const g of GRADIENTS){const d=document.createElement('div');d.className='st';d.style.background=gradCss(g.id);d.title='Apply as fill';d.onclick=()=>applyLibGradToFill(g.id);gr.append(d);}
   for(const g of customGradients){const d=document.createElement('div');d.className='st'+(g.id===gradEditId?' editing':'');d.style.background=gradCss(g.id);d.title='Apply as fill — right-click to edit or delete';d.onclick=()=>applyLibGradToFill(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>editGradient(g.id)},{label:'Delete',danger:true,fn:()=>deleteGradient(g.id)}]);gr.append(d);}
   const gadd=document.createElement('div');gadd.className='st stadd';gadd.textContent='+';gadd.title='Create a custom gradient';gadd.onclick=()=>newGradient();gr.append(gadd);
-  const cu=box.querySelector('#stCustom');customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='st';d.style.background=fillCss(c);d.title=c+' — right-click to edit or delete';d.onclick=()=>{applyStyle('fill',c);applyStyle('fillOn',true,true);};d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit color…',fn:()=>editSwatch(i,d)},{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();refreshPanels();}}]);cu.append(d);});
+  const cu=box.querySelector('#stCustom');customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='st';d.style.background=fillCss(c);d.title=c+' — right-click to edit or delete';d.onclick=()=>applyLibColor(c);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit color…',fn:()=>editSwatch(i,d)},{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();refreshPanels();}}]);cu.append(d);});
   const add=document.createElement('div');add.className='st stadd';add.textContent='+';add.title='Create a custom color (hex / RGB)';add.onclick=()=>{let temp=toHex(curStyle().fill||'#3d8bff');openColorPicker(add,temp,1,(hex)=>{temp=hex;},()=>{if(temp&&!customSwatches.includes(temp)){customSwatches.push(temp);saveSwatches();}refreshPanels();});};cu.append(add);
   const gEdit=customGradients.find(x=>x.id===gradEditId);if(gEdit)renderGradEditor(box,gEdit);}
 

@@ -18,7 +18,11 @@ while ($listener.IsListening) {
         '.js'   { $ctx.Response.ContentType = 'text/javascript' }
         '.css'  { $ctx.Response.ContentType = 'text/css' }
         '.json' { $ctx.Response.ContentType = 'application/json' }
+        '.webmanifest' { $ctx.Response.ContentType = 'application/manifest+json' }
         '.svg'  { $ctx.Response.ContentType = 'image/svg+xml' }
+        '.png'  { $ctx.Response.ContentType = 'image/png' }
+        '.jpg'  { $ctx.Response.ContentType = 'image/jpeg' }
+        '.ico'  { $ctx.Response.ContentType = 'image/x-icon' }
         default { $ctx.Response.ContentType = 'application/octet-stream' }
       }
       $ctx.Response.OutputStream.Write($bytes, 0, $bytes.Length)
