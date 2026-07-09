@@ -340,13 +340,20 @@
   .cp-hexrow{display:flex;align-items:center;gap:6px;margin-top:9px;}
   .cp-hexrow .cp-prev{width:26px;height:22px;border-radius:5px;border:1px solid var(--line2);flex:0 0 auto;}
   .cp-hexrow input{flex:1;text-transform:uppercase;}
-  .cp-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:7px;}
-  .cp-fields label{display:flex;flex-direction:column;font-size:9px;color:var(--muted);gap:2px;text-transform:uppercase;align-items:center;}
-  .cp-fields input{padding:4px 2px;font-size:11px;text-align:center;}
+  .cp-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
+  .cp-fields label{display:flex;flex-direction:column;font-size:9px;color:var(--muted);gap:3px;text-transform:uppercase;align-items:center;}
+  .cp-fields .stepper{width:100%;height:23px;}
+  .cp-fields .stepper input[type=number]{padding:2px 4px!important;font-size:11px;text-align:center;}
+  .cp-fields .stepbtns button{padding:0 3px;}
   .cp-modes{display:flex;margin-bottom:9px;border:1px solid var(--line2);border-radius:6px;overflow:hidden;}
   .cp-modes button{flex:1;background:var(--panel2);border:none;color:var(--muted);padding:6px 0;font-size:11px;cursor:pointer;}
   .cp-modes button.on{background:var(--accent);color:#fff;}
   .cp-grad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:190px;}
+  .cp-swatch{width:190px;max-height:290px;overflow-y:auto;overflow-x:hidden;}
+  .cp-swlabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 5px;}
+  .cp-swlabel:first-child{margin-top:2px;}
+  .cp-swgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
+  .cp-swgrid .cpg{height:26px;}
   .cpg{height:34px;border-radius:6px;border:1px solid var(--line2);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
   .cpg:hover,.cpg.sel{outline:2px solid var(--accent);outline-offset:1px;}
   .cpg.cpgadd{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;background:var(--panel2);border-style:dashed;}
@@ -429,7 +436,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 87</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 93</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -789,7 +796,8 @@ function drawRulers(){const rt=document.getElementById('rulerTop'),rl=document.g
   for(let v=Math.floor((-state.panY/state.zoom)/minU)*minU;;v+=minU){const py=state.panY+v*state.zoom;if(py>lh+1)break;if(py<-1)continue;const maj=Math.abs(v%stepU)<1e-6;cl.beginPath();cl.moveTo(maj?lw-9:lw-4,py+.5);cl.lineTo(lw,py+.5);cl.stroke();if(maj){cl.save();cl.translate(8,py-2);cl.rotate(-Math.PI/2);cl.fillText(String(Math.round(v*sc)),0,0);cl.restore();}}}
 window.addEventListener('resize',()=>drawRulers());
 function resetDefs(){gDefs.innerHTML='';for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));gDefs.append(lg);}
-  for(const s of state.shapes)if(fillIsGrad(s))appendShapeGrad(gDefs,'fillg_'+s.id,s.fillGrad);}
+  for(const s of state.shapes)if(fillIsGrad(s))appendShapeGrad(gDefs,'fillg_'+s.id,s.fillGrad);
+  if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(#docbg')===0&&state.doc.bgGrad)appendShapeGrad(gDefs,'docbg',state.doc.bgGrad);}
 function render(){
   resetDefs();
   gBoard.innerHTML='';
@@ -1055,7 +1063,7 @@ function hsvToRgb(h,s,v){const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;let r=0,
 function clamp01(x){return Math.max(0,Math.min(1,x));}
 let cp=null,cpState=null,cpInput=null,cpCommit=null,cpTarget='fill',cpMode='color';
 function ensureCP(){if(cp)return;cp=document.createElement('div');cp.className='colorpop';cp.innerHTML=`
-  <div class="cp-modes"><button data-cpm="color">Color</button><button data-cpm="gradient">Gradient</button></div>
+  <div class="cp-modes"><button data-cpm="color">Color</button><button data-cpm="gradient">Gradient</button><button data-cpm="swatch">Swatches</button></div>
   <div class="cp-color">
     <div class="cp-sv"><div class="cp-sv-hue"></div><div class="cp-sv-white"></div><div class="cp-sv-black"></div><div class="cp-cursor" data-c="sv"></div></div>
     <div class="cp-slider cp-hue"><div class="cp-knob" data-c="hue"></div></div>
@@ -1063,7 +1071,8 @@ function ensureCP(){if(cp)return;cp=document.createElement('div');cp.className='
     <div class="cp-hexrow"><div class="cp-prev"></div><input id="cpHex" spellcheck="false"></div>
     <div class="cp-fields"><label>R<input id="cpR" type="number" min="0" max="255"></label><label>G<input id="cpG" type="number" min="0" max="255"></label><label>B<input id="cpB" type="number" min="0" max="255"></label><label>A<input id="cpA" type="number" min="0" max="100"></label></div>
   </div>
-  <div class="cp-grad" style="display:none"></div>`;
+  <div class="cp-grad" style="display:none"></div>
+  <div class="cp-swatch" style="display:none"></div>`;
   document.body.append(cp);
   const q=s=>cp.querySelector(s);
   cp.querySelectorAll('[data-cpm]').forEach(b=>b.onclick=()=>setCPMode(b.dataset.cpm));
@@ -1073,6 +1082,7 @@ function ensureCP(){if(cp)return;cp=document.createElement('div');cp.className='
   q('#cpHex').onchange=e=>{const c=hexToRgb(e.target.value),v=rgbToHsv(c.r,c.g,c.b);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpApply();};
   ['R','G','B'].forEach(k=>q('#cp'+k).onchange=()=>{const v=rgbToHsv(+q('#cpR').value,+q('#cpG').value,+q('#cpB').value);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpApply();});
   q('#cpA').onchange=e=>{cpState.a=clamp01((+e.target.value)/100);cpApply();};
+  wrapSteppers(cp);
 }
 function dragArea(elm,cb){elm.addEventListener('pointerdown',e=>{e.preventDefault();elm.setPointerCapture(e.pointerId);const move=ev=>{const r=elm.getBoundingClientRect();cb(ev.clientX-r.left,ev.clientY-r.top,r.width,r.height);};move(e);const up=()=>{elm.removeEventListener('pointermove',move);elm.removeEventListener('pointerup',up);};elm.addEventListener('pointermove',move);elm.addEventListener('pointerup',up);});}
 function cpApply(){const{h,s,v,a}=cpState,rgb=hsvToRgb(h,s,v),hex=rgbToHex(rgb.r,rgb.g,rgb.b),q=x=>cp.querySelector(x);
@@ -1083,12 +1093,30 @@ function cpApply(){const{h,s,v,a}=cpState,rgb=hsvToRgb(h,s,v),hex=rgbToHex(rgb.r
   q('.cp-prev').style.background=hex;q('#cpHex').value=hex;q('#cpR').value=Math.round(rgb.r);q('#cpG').value=Math.round(rgb.g);q('#cpB').value=Math.round(rgb.b);q('#cpA').value=Math.round(a*100);
   if(cpInput)cpInput(hex,a);}
 function openColorPicker(anchor,hex,alpha,onInput,onCommit){ensureCP();const c=hexToRgb(hex),v=rgbToHsv(c.r,c.g,c.b);cpState={h:v.h,s:v.s,v:v.v,a:alpha==null?1:alpha};cpInput=onInput;cpCommit=onCommit;cp.style.display='block';
-  const r=anchor.getBoundingClientRect();let left=r.left-220;if(left<8)left=r.right+8;let top=r.top;const ph=300;if(top+ph>innerHeight)top=innerHeight-ph-8;if(top<8)top=8;cp.style.left=left+'px';cp.style.top=top+'px';cpApply();}
+  const mt=cp.querySelector('.cp-modes');if(mt)mt.style.display='';setCPMode('color');
+  const r=anchor.getBoundingClientRect();let left=r.left-220;if(left<8)left=r.right+8;let top=r.top;const ph=340;if(top+ph>innerHeight)top=innerHeight-ph-8;if(top<8)top=8;cp.style.left=left+'px';cp.style.top=top+'px';cpApply();}
 function closeCP(){if(cp&&cp.style.display==='block'){cp.style.display='none';const cb=cpCommit;cpInput=null;cpCommit=null;if(cb)cb();}}
 document.addEventListener('pointerdown',e=>{if(cp&&cp.style.display==='block'&&!cp.contains(e.target)&&!e.target.closest('#swFill,#swStroke,[data-attrsw]'))closeCP();},true);
 function setCPMode(mode){cpMode=mode;if(!cp)return;cp.querySelectorAll('[data-cpm]').forEach(b=>b.classList.toggle('on',b.dataset.cpm===mode));
-  cp.querySelector('.cp-color').style.display=mode==='color'?'':'none';cp.querySelector('.cp-grad').style.display=mode==='gradient'?'':'none';if(mode==='gradient')renderCPGradients();}
-function applyPaintGradient(id){const kind=cpTarget||'fill';for(const o of styleTargets()){o[kind]='url(#'+id+')';o[kind+'On']=true;}state.style[kind]='url(#'+id+')';state.style[kind+'On']=true;
+  cp.querySelector('.cp-color').style.display=mode==='color'?'':'none';
+  const gd=cp.querySelector('.cp-grad');if(gd){gd.style.display=mode==='gradient'?'':'none';if(mode==='gradient')renderCPGradients();}
+  const sw=cp.querySelector('.cp-swatch');if(sw){sw.style.display=mode==='swatch'?'':'none';if(mode==='swatch')renderCPSwatches();}}
+function renderCPSwatches(){const box=cp.querySelector('.cp-swatch');if(!box)return;box.innerHTML='';
+  const rgb=hsvToRgb(cpState.h,cpState.s,cpState.v),curHex=rgbToHex(rgb.r,rgb.g,rgb.b).toLowerCase();
+  const pick=c=>{const h=toHex(c),k=hexToRgb(h),v=rgbToHsv(k.r,k.g,k.b);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpApply();renderCPSwatches();};
+  const section=title=>{const l=document.createElement('div');l.className='cp-swlabel';l.textContent=title;box.append(l);const g=document.createElement('div');g.className='cp-swgrid';box.append(g);return g;};
+  const g1=section('Solid Colors');
+  for(const c of SOLIDS){const d=document.createElement('div');d.className='cpg'+(toHex(c).toLowerCase()===curHex?' sel':'');d.style.background=c;d.title=c;d.onclick=()=>pick(c);g1.append(d);}
+  const g2=section('My Swatches');
+  customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='cpg'+(toHex(c).toLowerCase()===curHex?' sel':'');d.style.background=fillCss(c);d.title=c+' — right-click to delete';d.onclick=()=>pick(c);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();renderCPSwatches();}}]);g2.append(d);});
+  const add=document.createElement('div');add.className='cpg cpgadd';add.textContent='+';add.title='Save the current color as a swatch';add.onclick=()=>{const r=hsvToRgb(cpState.h,cpState.s,cpState.v),hex=rgbToHex(r.r,r.g,r.b);if(!customSwatches.includes(hex)){customSwatches.push(hex);saveSwatches();renderCPSwatches();}};g2.append(add);
+  const g3=section('Gradients');
+  const cur=curStyle()[cpTarget||'fill'],curId=(typeof cur==='string'&&cur.startsWith('url('))?cur.slice(5,-1):null;
+  for(const g of allGradients()){const d=document.createElement('div');d.className='cpg'+(g.id===curId?' sel':'');d.style.background=gradCss(g.id);d.title=g.id.startsWith('cg')?'Gradient — right-click to edit/delete':'Gradient';d.onclick=()=>applyPaintGradient(g.id);if(g.id.startsWith('cg'))d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>{closeCP();setTab('styles');editGradient(g.id);}},{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPSwatches();}}]);g3.append(d);}
+  const gadd=document.createElement('div');gadd.className='cpg cpgadd';gadd.textContent='+';gadd.title='Create a new gradient';gadd.onclick=()=>{closeCP();setTab('styles');newGradient();};g3.append(gadd);}
+function applyPaintGradient(id){
+  if(cpTarget==='docbg'){const gg=allGradients().find(x=>x.id===id);if(gg){state.doc.bgGrad={type:gg.type||'linear',angle:gg.angle||0,stops:gg.stops.map(s=>s.slice())};state.doc.bg='url(#docbg)';render();updateDocBgSwatch();}closeCP();return;}
+  const kind=cpTarget||'fill';for(const o of styleTargets()){o[kind]='url(#'+id+')';o[kind+'On']=true;}state.style[kind]='url(#'+id+')';state.style[kind+'On']=true;
   if(state.sel.length)render();updateFSSwatch();closeCP();}
 function renderCPGradients(){const box=cp.querySelector('.cp-grad');box.innerHTML='';
   const cur=curStyle()[cpTarget||'fill'],curId=(typeof cur==='string'&&cur.startsWith('url('))?cur.slice(5,-1):null;
@@ -1097,8 +1125,7 @@ function renderCPGradients(){const box=cp.querySelector('.cp-grad');box.innerHTM
 function openColorFor(kind,anchor){cpTarget=kind;const s=curStyle(),opKey=kind+'Opacity';const cur=s[kind];
   openColorPicker(anchor,toHex(cur),s[opKey]==null?1:s[opKey],
     (hex,a)=>{for(const o of styleTargets()){o[kind]=hex;o[kind+'On']=true;o[opKey]=a;if(kind==='fill')o.fillSolid=hex;}state.style[kind]=hex;state.style[kind+'On']=true;state.style[opKey]=a;if(state.sel.length)render();updateFSSwatch();},
-    ()=>{if(state.sel.length)pushHistory();refreshPanels();});
-  setCPMode('color');const mt=cp&&cp.querySelector('.cp-modes');if(mt)mt.style.display='none';}
+    ()=>{if(state.sel.length)pushHistory();refreshPanels();});}
 function applyLibGradToFill(id){const lib=allGradients().find(x=>x.id===id);if(!lib)return;const mk=()=>({type:'linear',angle:lib.angle||0,stops:lib.stops.map(x=>x.slice())});
   for(const o of styleTargets()){o.fillGrad=mk();o.fill='url(#fillg_'+(o.id||'style')+')';o.fillOn=true;}state.style.fillGrad=mk();state.style.fill='url(#fillg_style)';state.style.fillOn=true;
   if(state.sel.length){render();pushHistory();}updateFSSwatch();refreshPanels();}
@@ -1109,6 +1136,7 @@ const INSP_TABS=[
   {key:'appearance',name:'Style',icon:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 010 16z" fill="currentColor" stroke="none"/>'},
   {key:'text',name:'Text',icon:'<path d="M6 20l6-15 6 15M8.5 14h7"/>'},
   {key:'styles',name:'Library',icon:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>'},
+  {key:'document',name:'Document',icon:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/>'},
 ];
 let activeTab=localStorage.getItem('gs-tab')||'geometry';
 if(!INSP_TABS.some(t=>t.key===activeTab))activeTab='geometry';
@@ -1151,6 +1179,7 @@ function refreshPanels(){if(!panelBodies.geometry)return;
   else if(activeTab==='appearance'){fillAppearance(panelBodies.appearance);wrapSteppers(panelBodies.appearance);}
   else if(activeTab==='text'){fillText(panelBodies.text);wrapSteppers(panelBodies.text);}
   else if(activeTab==='styles'){fillStyles(panelBodies.styles);}
+  else if(activeTab==='document'){fillDocument(panelBodies.document);wrapSteppers(panelBodies.document);}
   renderLayers();
   updateFSSwatch();updateBottom();updateToolbar();updateMenuStates();}
 function fillText(box){const sel=selShapes(),txt=sel.filter(s=>s.type==='text'),s=txt[0]||state.style;
@@ -1173,11 +1202,16 @@ function fillText(box){const sel=selShapes(),txt=sel.filter(s=>s.type==='text'),
   box.querySelectorAll('[data-talign]').forEach(b=>b.onclick=()=>applyText('align',b.dataset.talign,true));
   box.querySelectorAll('[data-tstyle]').forEach(b=>b.onclick=()=>toggleTextStyle(b.dataset.tstyle));}
 
-function fillGeometry(box){const sels=selShapes();
-  if(!sels.length){const isLand=state.doc.w>state.doc.h,transp=state.doc.bg==='none',bg=toHex(state.doc.bg&&state.doc.bg!=='none'?state.doc.bg:'#ffffff');
-    const unitOpts=[['px','pixels'],['in','inches'],['cm','centimeters'],['mm','millimeters']].map(([v,n])=>`<option value="${v}"${docUnit===v?' selected':''}>${n}</option>`).join('');
-    const stp=docUnit==='px'?1:0.1;
-    box.innerHTML=`
+function docBgCss(){if(state.doc.bg==='none')return null;if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(')===0&&state.doc.bgGrad)return gradToCss(state.doc.bgGrad);return fillCss(state.doc.bg||'#ffffff');}
+function updateDocBgSwatch(){const sw=document.getElementById('docBg');if(!sw)return;const css=docBgCss();sw.classList.toggle('transp',css==null);sw.style.background=css||'';}
+function openDocBgPicker(anchor){cpTarget='docbg';const isGrad=typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(')===0;
+  openColorPicker(anchor,toHex(isGrad||state.doc.bg==='none'?'#ffffff':state.doc.bg),1,
+    hex=>{state.doc.bg=hex;state.doc.bgGrad=null;render();updateDocBgSwatch();},
+    ()=>{pushHistory();autosave();refreshPanels();});}
+function fillDocument(box){const isLand=state.doc.w>state.doc.h,transp=state.doc.bg==='none',bgCss=docBgCss();
+  const unitOpts=[['px','pixels'],['in','inches'],['cm','centimeters'],['mm','millimeters']].map(([v,n])=>`<option value="${v}"${docUnit===v?' selected':''}>${n}</option>`).join('');
+  const stp=docUnit==='px'?1:0.1;
+  box.innerHTML=`
     <div class="geosec"><div class="geohead">Canvas</div>
       <div class="dsrow"><label>Width:</label><input type="number" id="docW" value="${toUnit(state.doc.w)}" step="${stp}"><select id="docUnit" class="dstrail">${unitOpts}</select></div>
       <div class="dsrow"><label>Height:</label><input type="number" id="docH" value="${toUnit(state.doc.h)}" step="${stp}"><span class="dstrail seg orientseg"><button id="orPort" class="${isLand?'':'on'}" title="Portrait"><svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="1"/></svg></button><button id="orLand" class="${isLand?'on':''}" title="Landscape"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1"/></svg></button></span></div>
@@ -1187,23 +1221,25 @@ function fillGeometry(box){const sels=selShapes();
       <div class="dsrow"><label>1 ${docUnit} =</label><input type="number" id="docScale" value="${state.doc.scale||1}" step="0.1" min="0.01"><span class="dstrail" style="color:var(--muted);font-size:11px;">${docUnit}</span></div>
     </div>
     <div class="geosec"><div class="geohead">Background</div>
-      <div class="dsrow"><select id="docBgMode">${['color','none'].map(v=>`<option value="${v}"${(transp?v==='none':v==='color')?' selected':''}>${v==='color'?'Color':'Transparent'}</option>`).join('')}</select></div>
-      <div class="dsswatch ${transp?'transp':''}" id="docBg" style="${transp?'':'background:'+bg}" title="Choose document color"></div>
+      <div class="dsrow"><select id="docBgMode">${['color','none'].map(v=>`<option value="${v}"${(transp?v==='none':v==='color')?' selected':''}>${v==='color'?'Color / Gradient':'Transparent'}</option>`).join('')}</select></div>
+      <div class="dsswatch ${transp?'transp':''}" id="docBg" style="${transp?'':'background:'+bgCss}" title="Choose color or gradient — opens the picker"></div>
     </div>`;
-    const w=box.querySelector('#docW'),h=box.querySelector('#docH');
-    const setDoc=(nw,nh)=>{state.doc.w=Math.max(1,Math.round(nw));state.doc.h=Math.max(1,Math.round(nh));render();updateStatus();refreshPanels();zoomFit();pushHistory();};
-    w.onchange=()=>{let nw=fromUnit(w.value);if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.h=Math.max(1,Math.round(nw/r));}state.doc.w=nw;render();updateStatus();refreshPanels();pushHistory();};
-    h.onchange=()=>{let nh=fromUnit(h.value);if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.w=Math.max(1,Math.round(nh*r));}state.doc.h=nh;render();updateStatus();refreshPanels();pushHistory();};
-    box.querySelector('#docUnit').onchange=e=>{docUnit=e.target.value;localStorage.setItem('gs-unit',docUnit);refreshPanels();};
-    box.querySelector('#szLock').onclick=()=>{sizeLocked=!sizeLocked;localStorage.setItem('gs-lock',sizeLocked?'1':'0');refreshPanels();};
-    box.querySelector('#docPreset').onchange=e=>{const pr=DOCPRESETS[+e.target.value];if(!pr||!pr.w)return;let pw=pr.w,ph=pr.h;const curLand=state.doc.w>state.doc.h,pLand=pw>ph;if(curLand!==pLand){const t=pw;pw=ph;ph=t;}setDoc(pw,ph);};
-    box.querySelector('#orPort').onclick=()=>{if(state.doc.w>state.doc.h)setDoc(state.doc.h,state.doc.w);};
-    box.querySelector('#orLand').onclick=()=>{if(state.doc.h>state.doc.w)setDoc(state.doc.h,state.doc.w);};
-    const sc=box.querySelector('#docScale');sc.onchange=()=>{state.doc.scale=Math.max(0.01,+sc.value||1);drawRulers();pushHistory();};
-    const dbg=box.querySelector('#docBg'),mode=box.querySelector('#docBgMode');
-    mode.onchange=()=>{state.doc.bg=mode.value==='none'?'none':((state.doc.bg&&state.doc.bg!=='none')?state.doc.bg:'#ffffff');render();refreshPanels();pushHistory();};
-    dbg.onclick=()=>{if(state.doc.bg==='none'){state.doc.bg='#ffffff';dbg.classList.remove('transp');dbg.style.background='#ffffff';render();}openColorPicker(dbg,toHex(state.doc.bg||'#ffffff'),1,hex=>{state.doc.bg=hex;dbg.style.background=hex;render();},()=>{pushHistory();autosave();refreshPanels();});};
-    return;}
+  const w=box.querySelector('#docW'),h=box.querySelector('#docH');
+  const setDoc=(nw,nh)=>{state.doc.w=Math.max(1,Math.round(nw));state.doc.h=Math.max(1,Math.round(nh));render();updateStatus();refreshPanels();zoomFit();pushHistory();};
+  w.onchange=()=>{let nw=fromUnit(w.value);if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.h=Math.max(1,Math.round(nw/r));}state.doc.w=nw;render();updateStatus();refreshPanels();pushHistory();};
+  h.onchange=()=>{let nh=fromUnit(h.value);if(sizeLocked){const r=state.doc.w/state.doc.h;state.doc.w=Math.max(1,Math.round(nh*r));}state.doc.h=nh;render();updateStatus();refreshPanels();pushHistory();};
+  box.querySelector('#docUnit').onchange=e=>{docUnit=e.target.value;localStorage.setItem('gs-unit',docUnit);refreshPanels();};
+  box.querySelector('#szLock').onclick=()=>{sizeLocked=!sizeLocked;localStorage.setItem('gs-lock',sizeLocked?'1':'0');refreshPanels();};
+  box.querySelector('#docPreset').onchange=e=>{const pr=DOCPRESETS[+e.target.value];if(!pr||!pr.w)return;let pw=pr.w,ph=pr.h;const curLand=state.doc.w>state.doc.h,pLand=pw>ph;if(curLand!==pLand){const t=pw;pw=ph;ph=t;}setDoc(pw,ph);};
+  box.querySelector('#orPort').onclick=()=>{if(state.doc.w>state.doc.h)setDoc(state.doc.h,state.doc.w);};
+  box.querySelector('#orLand').onclick=()=>{if(state.doc.h>state.doc.w)setDoc(state.doc.h,state.doc.w);};
+  const sc=box.querySelector('#docScale');sc.onchange=()=>{state.doc.scale=Math.max(0.01,+sc.value||1);drawRulers();pushHistory();};
+  const dbg=box.querySelector('#docBg'),mode=box.querySelector('#docBgMode');
+  mode.onchange=()=>{if(mode.value==='none')state.doc.bg='none';else if(state.doc.bg==='none')state.doc.bg='#ffffff';render();refreshPanels();pushHistory();};
+  dbg.onclick=()=>{if(state.doc.bg==='none'){state.doc.bg='#ffffff';render();}openDocBgPicker(dbg);};
+}
+function fillGeometry(box){const sels=selShapes();
+  if(!sels.length){box.innerHTML='<div class="hint" style="padding:12px;line-height:1.5;">No selection.<br>Select an object to edit its <b>Position</b> &amp; <b>Size</b>, or use the <b>Document</b> tab for canvas settings.</div>';return;}
   const multi=sels.length>1,s=sels[0],b=multi?null:shapeBBox(s);
   let extra='';
   if(!multi){
@@ -1731,6 +1767,7 @@ function buildExportRegion(region,whiteBg){
   const svg=el('svg',{xmlns:SVGNS,width:bb.w,height:bb.h,viewBox:`${bb.x} ${bb.y} ${bb.w} ${bb.h}`});
   const defs=el('defs',{});
   for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}
+  if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(#docbg')===0&&state.doc.bgGrad)appendShapeGrad(defs,'docbg',state.doc.bgGrad);
   svg.append(defs);
   if(whiteBg)svg.append(el('rect',{x:bb.x,y:bb.y,width:bb.w,height:bb.h,fill:state.doc.bg||'#ffffff'}));
   const list=region==='selection'?renderOrder().filter(s=>state.sel.includes(s.id)):renderOrder().filter(shapeVisible);
