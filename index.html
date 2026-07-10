@@ -350,6 +350,7 @@
   input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{opacity:1;height:22px;}
   #stage.tool-triangle{cursor:crosshair;}
   #stage.tool-zoom{cursor:zoom-in;}
+  #stage.tool-zoom.zoom-out{cursor:zoom-out;}
 
   /* Color picker popover */
   .colorpop{position:fixed;z-index:400;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;width:260px;box-sizing:border-box;box-shadow:0 14px 44px #000b;display:none;}
@@ -469,7 +470,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 120</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 121</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -989,7 +990,7 @@ stage.addEventListener('pointerdown',e=>{
     case 'text':startText(p);break;
     case 'pencil':startPencil(p);break;
     case 'pen':penClick(p,e);break;
-    case 'zoom':{setZoom(state.zoom*(e.altKey?1/1.4:1.4),e.clientX,e.clientY);break;}
+    case 'zoom':{setZoom(state.zoom*((e.altKey||e.metaKey)?1/1.4:1.4),e.clientX,e.clientY);break;}
   }
   updateStatus();
 });
@@ -2052,10 +2053,11 @@ window.addEventListener('keydown',e=>{
   if(e.key==='Escape'){if(penDraft){penDraft=null;renderOverlay();}state.sel=[];render();refreshPanels();return;}
   if(e.key==='Enter'&&penDraft){commitPen();return;}
   if(e.key===' '){spaceDown=true;stage.classList.add('tool-hand');return;}
+  if(state.tool==='zoom'&&(e.metaKey||e.altKey)){stage.classList.add('zoom-out');}
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)&&state.sel.length){e.preventDefault();const d=e.shiftKey?10:1;const dx=e.key==='ArrowLeft'?-d:e.key==='ArrowRight'?d:0;const dy=e.key==='ArrowUp'?-d:e.key==='ArrowDown'?d:0;for(const s of selShapes())translateShape(s,dx,dy);render();updateStatus();clearTimeout(window._nudge);window._nudge=setTimeout(()=>{pushHistory();refreshPanels();},400);return;}
   const t=TOOLS.find(t=>t.key&&t.key.toLowerCase()===e.key.toLowerCase());if(t)setTool(t.id);
 });
-window.addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;if(state.tool!=='hand')stage.classList.remove('tool-hand');}});
+window.addEventListener('keyup',e=>{if(e.key===' '){spaceDown=false;if(state.tool!=='hand')stage.classList.remove('tool-hand');}if(!e.metaKey&&!e.altKey)stage.classList.remove('zoom-out');});
 stage.addEventListener('dblclick',e=>{if(penDraft){commitPen();return;}if(cropTarget){endCrop();return;}const id=targetId(e.target)||(hitTest(toSVG(e.clientX,e.clientY))||{}).id;const sh=id&&state.shapes.find(x=>x.id===id);if(sh&&sh.type==='image')startCrop(sh);});
 
 //////////////////// MENU BAR ////////////////////
