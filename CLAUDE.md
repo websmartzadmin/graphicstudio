@@ -1,4 +1,4 @@
-# Graphic Studio
+# GrafixAnywhere
 
 A browser-based vector illustration app — a single, self-contained clone of the Mac app **Graphic / iDraw**. Runs with zero setup: just open `index.html` in a browser.
 

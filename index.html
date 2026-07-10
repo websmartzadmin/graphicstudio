@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Graphic Studio</title>
+<title>GrafixAnywhere</title>
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -484,7 +484,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 123</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 124</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -2173,7 +2173,7 @@ const MENUS=[
     ['Make Compound Path','',null],['Convert Text to Outlines','',null],'-',
     ['Artwork Size…','',openArtworkSize],['Canvas Size…','',openCanvasSize]]},
   {name:'View',items:[['Zoom In','⌘+',()=>setZoom(state.zoom*1.2)],['Zoom Out','⌘−',()=>setZoom(state.zoom/1.2)],['Fit to Window','⌘0',zoomFit],'-',['Snap to Guides','',()=>{snapEnabled=!snapEnabled;localStorage.setItem('gs-snap',snapEnabled?'1':'0');buildMenus();},'snap'],'-',['Reset Panel Layout','',()=>{localStorage.removeItem('gs-panels');buildPanels();}]]},
-  {name:'Help',items:[['Keyboard Shortcuts','',showShortcuts],['About Graphic Studio','',showAbout]]},
+  {name:'Help',items:[['Keyboard Shortcuts','',showShortcuts],['About GrafixAnywhere','',showAbout]]},
 ];
 function buildMenus(){const bar=document.getElementById('menubar');bar.innerHTML='';
   MENUS.forEach(m=>{const menu=document.createElement('div');menu.className='menu';
@@ -2192,7 +2192,7 @@ function closeMenus(){document.querySelectorAll('.menu.open').forEach(m=>m.class
 function updateMenuStates(){const ok=selShapes().filter(s=>['rect','ellipse','polygon','star','path','freehand'].includes(s.type)).length>=2;document.querySelectorAll('.menu-item[data-act="bool"]').forEach(mi=>mi.classList.toggle('disabled',!ok));}
 document.addEventListener('click',closeMenus);
 function showShortcuts(){alert('Keyboard shortcuts\n\nTools:  V Select · A Triangle · R Rectangle · E Ellipse · L Line · G Polygon · S Star · T Text · P Pen · N Pencil · H Hand\n\nEdit:  Ctrl/⌘Z Undo · Shift+Ctrl/⌘Z Redo · Ctrl/⌘C-V Copy/Paste · Ctrl/⌘D Duplicate · Ctrl/⌘A Select All · Ctrl/⌘S Save · Delete Remove\n\nCanvas:  Arrows Nudge (Shift = 10px) · Space+drag or Hand Pan · Scroll Zoom · Shift while drawing = constrain');}
-function showAbout(){alert('Graphic Studio\nA browser-based vector editor inspired by Graphic / iDraw.\n\nRuns entirely in your browser — your work auto-saves locally, and there is nothing to install.\n\nCopyright 2026 David M. Smith. All Rights Reserved.');}
+function showAbout(){alert('GrafixAnywhere\nA browser-based vector editor inspired by Graphic / iDraw.\n\nRuns entirely in your browser — your work auto-saves locally, and there is nothing to install.\n\nCopyright 2026 David M. Smith. All Rights Reserved.');}
 
 //////////////////// WIRING ////////////////////
 document.getElementById('exCancel').onclick=closeExport;
@@ -2218,7 +2218,7 @@ function seedDemoInto(st){const bg=luid(),ct=luid();
   {id:uid(),layerId:bg,type:'rect',name:'Card',x:120,y:120,w:560,h:360,rx:24,fill:'url(#g-blue)',stroke:'#1b52c9',strokeWidth:2,opacity:1,fillOn:true,strokeOn:true,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
   {id:uid(),layerId:bg,type:'ellipse',name:'Accent',x:470,y:70,w:180,h:180,fill:'url(#g-orange)',stroke:'#fff',strokeWidth:0,opacity:.95,fillOn:true,strokeOn:false,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
   {id:uid(),layerId:ct,type:'star',name:'Star',x:180,y:180,w:120,h:120,sides:5,starRatio:.45,fill:'url(#g-gold)',stroke:'#f59f00',strokeWidth:2,opacity:1,fillOn:true,strokeOn:true,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
-  {id:uid(),layerId:ct,type:'text',name:'Title',x:180,y:340,w:300,h:48,text:'Graphic Studio',fontSize:44,fontFamily:'Helvetica, Arial, sans-serif',fontWeight:'700',fill:'#ffffff',stroke:'#000',strokeWidth:1,opacity:1,fillOn:true,strokeOn:false,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
+  {id:uid(),layerId:ct,type:'text',name:'Title',x:180,y:340,w:300,h:48,text:'GrafixAnywhere',fontSize:44,fontFamily:'Helvetica, Arial, sans-serif',fontWeight:'700',fill:'#ffffff',stroke:'#000',strokeWidth:1,opacity:1,fillOn:true,strokeOn:false,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
 ];}
 init();
 </script>

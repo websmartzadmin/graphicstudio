@@ -1,6 +1,6 @@
 {
-  "name": "Graphic Studio",
-  "short_name": "Graphic",
+  "name": "GrafixAnywhere",
+  "short_name": "Grafix",
   "description": "Browser-based vector illustration app.",
   "start_url": ".",
   "scope": ".",
