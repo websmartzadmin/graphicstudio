@@ -202,10 +202,14 @@
   .geofield{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
   .geofield .gi{width:15px;flex:0 0 auto;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;}
   .geofield .gi svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
-  .geofield .unit{flex:0 0 auto;color:var(--muted);font-size:10px;min-width:8px;}
+  .geofield .unit{flex:0 0 auto;color:var(--muted);font-size:10px;width:25px;text-align:left;}
   .geofield .stepper{flex:1;min-width:0;}
   .geofield select{flex:1;min-width:0;}
   .geofield .orientseg{flex:1;}
+  .geofield.gfrange input[type=range]{flex:1;min-width:0;width:100%;margin:0;}
+  .geo2col.onecol{grid-template-columns:1fr;}
+  .gfbtn{width:100%;padding:7px;border:1px solid var(--line2);background:var(--panel2);color:var(--text);border-radius:6px;cursor:pointer;font-size:11px;margin-top:2px;}
+  .gfbtn:hover{background:var(--hover);}
   .docbgsw{width:32px;height:22px;border-radius:5px;border:1px solid var(--line2);cursor:pointer;flex:0 0 auto;box-shadow:inset 0 0 0 1px #0003;}
   .dsrow{display:flex;align-items:center;gap:6px;padding:3px 0;}
   .dsrow>label{width:54px;flex:0 0 auto;color:var(--muted);font-size:11px;}
@@ -214,6 +218,7 @@
   .dsrow .dstrail{flex:0 0 auto;}
   .dsrow select.dstrail{max-width:86px;flex:0 0 auto;}
   .dsswatch{width:60px;height:42px;border-radius:5px;border:1px solid var(--line2);cursor:pointer;margin-top:4px;box-shadow:inset 0 0 0 1px #0003;}
+  .dsrow .dsswatch{flex:1;width:auto;height:44px;margin-top:0;min-width:0;}
   .dsswatch.transp{background:repeating-conic-gradient(#b8b8b8 0 25%,#fff 0 50%) 50%/14px 14px;}
   .libtargetrow{display:flex;align-items:center;gap:8px;padding:8px 12px 2px;}
   .libtargetlbl{font-size:11px;color:var(--muted);}
@@ -246,7 +251,15 @@
   .btnrow{display:flex;gap:6px;padding:6px 12px;flex-wrap:wrap;}
   .btnrow button{flex:1;min-width:56px;background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:6px;border-radius:6px;cursor:pointer;font-size:11px;}
   .btnrow button:hover{background:var(--hover);}
-  .geofield .lockpad{width:24px;flex:0 0 auto;}
+  .sizewrap{display:flex;align-items:center;gap:6px;}
+  .sizewrap .sizefields{flex:1;min-width:0;}
+  .sizewrap .sizefields .geofield:last-child{margin-bottom:0;}
+  .sizewrap .lockbtn{flex:0 0 auto;}
+  .dssize{display:flex;align-items:center;gap:6px;}
+  .dssize .dssize-rows{flex:1;min-width:0;}
+  .dssize .lockbtn{flex:0 0 auto;}
+  .dsrow.dgr{padding-right:30px;}
+  .dsrow .dsfill{flex:1;min-width:0;}
   .geosec{padding:2px 12px 0;margin-top:8px;margin-bottom:6px;}
   .align-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:0 12px 4px;}
   .align-grid button{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;height:30px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;}
@@ -454,7 +467,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 113</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 119</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1310,16 +1323,23 @@ function fillDocument(box){const isLand=state.doc.w>state.doc.h,transp=state.doc
   const stp=docUnit==='px'?1:0.1;
   box.innerHTML=`
     <div class="geosec"><div class="geohead">Canvas</div>
-      <div class="dsrow"><label>Width:</label><input type="number" id="docW" value="${toUnit(state.doc.w)}" step="${stp}"><select id="docUnit" class="dstrail">${unitOpts}</select></div>
-      <div class="dsrow"><label>Height:</label><input type="number" id="docH" value="${toUnit(state.doc.h)}" step="${stp}"><span class="dstrail seg orientseg"><button id="orPort" class="${isLand?'':'on'}" title="Portrait"><svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="1"/></svg></button><button id="orLand" class="${isLand?'on':''}" title="Landscape"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1"/></svg></button></span></div>
-      <div class="dsrow"><label>Preset:</label><select id="docPreset">${DOCPRESETS.map((pr,i)=>`<option value="${i}">${pr.name}</option>`).join('')}</select><button class="lockbtn dstrail ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
+      <div class="dssize">
+        <div class="dssize-rows">
+          <div class="dsrow"><label>Width:</label><input type="number" id="docW" value="${toUnit(state.doc.w)}" step="${stp}"></div>
+          <div class="dsrow"><label>Height:</label><input type="number" id="docH" value="${toUnit(state.doc.h)}" step="${stp}"></div>
+        </div>
+        <button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button>
+      </div>
+      <div class="dsrow dgr"><label>Units:</label><select id="docUnit">${unitOpts}</select></div>
+      <div class="dsrow dgr"><label>Orient:</label><span class="seg orientseg dsfill"><button id="orPort" class="${isLand?'':'on'}" title="Portrait"><svg viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="1"/></svg></button><button id="orLand" class="${isLand?'on':''}" title="Landscape"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1"/></svg></button></span></div>
+      <div class="dsrow dgr"><label>Preset:</label><select id="docPreset">${DOCPRESETS.map((pr,i)=>`<option value="${i}">${pr.name}</option>`).join('')}</select></div>
     </div>
     <div class="geosec"><div class="geohead">Scale</div>
-      <div class="dsrow"><label>1 ${docUnit} =</label><input type="number" id="docScale" value="${state.doc.scale||1}" step="0.1" min="0.01"><span class="dstrail" style="color:var(--muted);font-size:11px;">${docUnit}</span></div>
+      <div class="dsrow dgr"><label>1 ${docUnit} =</label><input type="number" id="docScale" value="${state.doc.scale||1}" step="0.1" min="0.01"></div>
     </div>
     <div class="geosec"><div class="geohead">Background</div>
-      <div class="dsrow"><select id="docBgMode">${['color','none'].map(v=>`<option value="${v}"${(transp?v==='none':v==='color')?' selected':''}>${v==='color'?'Color / Gradient':'Transparent'}</option>`).join('')}</select></div>
-      <div class="dsswatch ${transp?'transp':''}" id="docBg" style="${transp?'':'background:'+bgCss}" title="Choose color or gradient — opens the picker"></div>
+      <div class="dsrow dgr"><label>Fill:</label><select id="docBgMode">${['color','none'].map(v=>`<option value="${v}"${(transp?v==='none':v==='color')?' selected':''}>${v==='color'?'Color / Gradient':'Transparent'}</option>`).join('')}</select></div>
+      <div class="dsrow dgr"><label></label><div class="dsswatch ${transp?'transp':''}" id="docBg" style="${transp?'':'background:'+bgCss}" title="Choose color or gradient — opens the picker"></div></div>
     </div>`;
   const w=box.querySelector('#docW'),h=box.querySelector('#docH');
   const setDoc=(nw,nh)=>{state.doc.w=Math.max(1,Math.round(nw));state.doc.h=Math.max(1,Math.round(nh));render();updateStatus();refreshPanels();zoomFit();pushHistory();};
@@ -1340,10 +1360,13 @@ function fillGeometry(box){const sels=selShapes();
   const multi=sels.length>1,s=sels[0],b=multi?selWorldBBox():shapeBBox(s);
   let extra='';
   if(!multi){
-    if(s.type==='rect')extra=`<div class="row"><label>Corner</label><div class="ctl"><input type="number" id="pRx" value="${Math.round(s.rx||0)}" min="0"></div></div>`;
-    if(s.type==='polygon'||s.type==='star')extra+=`<div class="row"><label>Sides</label><div class="ctl"><input type="number" id="pSides" value="${s.sides}" min="3" max="60"></div></div>`;
-    if(s.type==='star')extra+=`<div class="row"><label>Inner</label><div class="ctl"><input type="range" id="pRatio" min="0.1" max="0.9" step="0.01" value="${s.starRatio}"></div></div>`;
-    if(s.type==='text')extra+=`<div class="row"><label>Font</label><div class="ctl"><select id="tFont">${FONTS.map(f=>`<option value="${f}" ${s.fontFamily===f?'selected':''}>${f.split(',')[0]}</option>`).join('')}</select></div></div><div class="grid2"><div class="field"><span class="fl">Sz</span><input type="number" id="tSize" value="${Math.round(s.fontSize)}" min="4"></div><div class="field"><span class="fl">Wt</span><select id="tWeight">${['300','400','500','600','700','800'].map(w=>`<option ${s.fontWeight===w?'selected':''}>${w}</option>`).join('')}</select></div></div><div class="row"><label>Text</label><div class="ctl"><button class="chip" id="tEdit">Edit text…</button></div></div>`;
+    const CRNICON='<svg viewBox="0 0 24 24"><path d="M5 20v-7a8 8 0 018-8h7"/></svg>',SIDEICON='<svg viewBox="0 0 24 24"><path d="M12 3l9 6.5-3.4 10.5H6.4L3 9.5z"/></svg>';
+    if(s.type==='rect')extra=`<div class="geo2col"><div class="geocol"><div class="geohead">Corner</div><div class="geofield"><span class="gi">${CRNICON}</span><input type="number" id="pRx" value="${Math.round(s.rx||0)}" min="0"><span class="unit">px</span></div></div><div class="geocol"></div></div>`;
+    if(s.type==='polygon'||s.type==='star')extra+=`<div class="geo2col"><div class="geocol"><div class="geohead">Sides</div><div class="geofield"><span class="gi">${SIDEICON}</span><input type="number" id="pSides" value="${s.sides}" min="3" max="60"><span class="unit"></span></div></div>${s.type==='star'?`<div class="geocol"><div class="geohead">Inner</div><div class="geofield gfrange"><input type="range" id="pRatio" min="0.1" max="0.9" step="0.01" value="${s.starRatio}"></div></div>`:'<div class="geocol"></div>'}</div>`;
+    if(s.type==='text'){const SZICON='<svg viewBox="0 0 24 24"><path d="M2 19l5-13 5 13M3.7 14.6h6.6"/><path d="M14 19l3-8 3 8M15.2 16.3h3.6"/></svg>';
+      extra+=`<div class="geo2col onecol"><div class="geocol"><div class="geohead">Font</div><div class="geofield"><select id="tFont">${FONTS.map(f=>`<option value="${f}" ${s.fontFamily===f?'selected':''}>${f.split(',')[0]}</option>`).join('')}</select></div></div></div>
+      <div class="geo2col"><div class="geocol"><div class="geohead">Size</div><div class="geofield"><span class="gi">${SZICON}</span><input type="number" id="tSize" value="${Math.round(s.fontSize)}" min="4"><span class="unit">px</span></div></div><div class="geocol"><div class="geohead">Weight</div><div class="geofield"><select id="tWeight">${['300','400','500','600','700','800'].map(w=>`<option ${s.fontWeight===w?'selected':''}>${w}</option>`).join('')}</select></div></div></div>
+      <div class="geo2col onecol"><div class="geocol"><button class="chip gfbtn" id="tEdit">Edit text…</button></div></div>`;}
   }
   const WICON='<svg viewBox="0 0 24 24"><path d="M3 12h18M5 8v8M19 8v8"/></svg>',HICON='<svg viewBox="0 0 24 24"><path d="M12 3v18M8 5h8M8 19h8"/></svg>',
     SHX='<svg viewBox="0 0 24 24"><path d="M8 5h11l-3 14H5z"/></svg>',SHY='<svg viewBox="0 0 24 24"><path d="M5 8l14-3v11l-14 3z"/></svg>',
@@ -1355,8 +1378,13 @@ function fillGeometry(box){const sels=selShapes();
         <div class="geofield"><span class="gi">Y</span><input type="number" id="pY" value="${Math.round(b.y)}"><span class="unit">px</span></div>
       </div>
       <div class="geocol"><div class="geohead">Size</div>
-        <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"><span class="lockpad"></span></div>
-        <div class="geofield"><span class="gi">${HICON}</span><input type="number" id="pH" value="${Math.round(b.h)}"><button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
+        <div class="sizewrap">
+          <div class="sizefields">
+            <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"></div>
+            <div class="geofield"><span class="gi">${HICON}</span><input type="number" id="pH" value="${Math.round(b.h)}"></div>
+          </div>
+          <button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button>
+        </div>
       </div>
     </div>`;
   box.innerHTML=multi?`<div class="hint" style="padding:6px 12px 3px;">${sels.length} objects selected — group position &amp; size.</div>${posSize}`:`
