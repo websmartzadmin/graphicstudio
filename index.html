@@ -470,7 +470,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 121</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 122</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -2095,7 +2095,7 @@ function closeMenus(){document.querySelectorAll('.menu.open').forEach(m=>m.class
 function updateMenuStates(){const ok=selShapes().filter(s=>['rect','ellipse','polygon','star','path','freehand'].includes(s.type)).length>=2;document.querySelectorAll('.menu-item[data-act="bool"]').forEach(mi=>mi.classList.toggle('disabled',!ok));}
 document.addEventListener('click',closeMenus);
 function showShortcuts(){alert('Keyboard shortcuts\n\nTools:  V Select · A Triangle · R Rectangle · E Ellipse · L Line · G Polygon · S Star · T Text · P Pen · N Pencil · H Hand\n\nEdit:  Ctrl/⌘Z Undo · Shift+Ctrl/⌘Z Redo · Ctrl/⌘C-V Copy/Paste · Ctrl/⌘D Duplicate · Ctrl/⌘A Select All · Ctrl/⌘S Save · Delete Remove\n\nCanvas:  Arrows Nudge (Shift = 10px) · Space+drag or Hand Pan · Scroll Zoom · Shift while drawing = constrain');}
-function showAbout(){alert('Graphic Studio\nA browser-based vector editor inspired by Graphic / iDraw.\n\nRuns entirely in your browser — your work auto-saves locally, and there is nothing to install.');}
+function showAbout(){alert('Graphic Studio\nA browser-based vector editor inspired by Graphic / iDraw.\n\nRuns entirely in your browser — your work auto-saves locally, and there is nothing to install.\n\nCopyright 2026 David M. Smith. All Rights Reserved.');}
 
 //////////////////// WIRING ////////////////////
 document.getElementById('exCancel').onclick=closeExport;
