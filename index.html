@@ -352,6 +352,20 @@
   #stage.tool-zoom{cursor:zoom-in;}
   #stage.tool-zoom.zoom-out{cursor:zoom-out;}
 
+  /* Document tabs */
+  #docTabs{display:flex;align-items:flex-end;gap:2px;height:32px;background:var(--toolbar);border-bottom:1px solid var(--line);padding:0 6px;flex:0 0 auto;overflow-x:auto;overflow-y:hidden;}
+  #docTabs::-webkit-scrollbar{height:0;}
+  .doctab{display:flex;align-items:center;gap:6px;padding:0 6px 0 11px;min-width:104px;max-width:200px;height:26px;background:var(--panel);border:1px solid var(--line);border-bottom:none;border-radius:7px 7px 0 0;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap;flex:0 0 auto;}
+  .doctab:hover{background:var(--panel2);color:var(--text);}
+  .doctab.active{background:var(--bg);color:var(--text);border-color:var(--line2);}
+  .doctab .dt-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;outline:none;}
+  .doctab .dt-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 auto;display:none;}
+  .doctab.dirty .dt-dot{display:block;}
+  .doctab .dt-close{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:1px 4px;border-radius:4px;flex:0 0 auto;}
+  .doctab .dt-close:hover{background:var(--hover);color:var(--text);}
+  .dt-add{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:0 9px;border-radius:6px;align-self:center;height:24px;flex:0 0 auto;}
+  .dt-add:hover{background:var(--hover);color:var(--text);}
+
   /* Color picker popover */
   .colorpop{position:fixed;z-index:400;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;width:260px;box-sizing:border-box;box-shadow:0 14px 44px #000b;display:none;}
   .cp-sv{position:relative;width:100%;height:150px;border-radius:8px;overflow:hidden;cursor:crosshair;touch-action:none;}
@@ -470,7 +484,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 122</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 123</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -482,6 +496,8 @@
     <div class="ib"><span class="k">W</span><span class="v" id="ibW">–</span><span class="k">H</span><span class="v" id="ibH">–</span></div>
     <div class="ib" id="ibCount">No selection</div>
   </div>
+
+  <div id="docTabs"></div>
 
   <div id="body">
     <div id="tools">
@@ -636,7 +652,14 @@ let state={
     cap:'round',join:'round',miter:4,dash:'',blend:'normal',
     fontSize:32,fontFamily:'Helvetica, Arial, sans-serif',fontWeight:'400',fontStyle:'normal',underline:false,letterSpacing:0,lineHeight:1.2,align:'start',sides:5,starRatio:.5,rx:0},
 };
+const DEFAULT_STYLE=JSON.parse(JSON.stringify(state.style));
 let history=[],future=[],clipboard=[],committed=null;
+// ---- Multi-document tabs ----
+let tabs=[],activeDoc=0,tabSeq=1;
+const tabId=()=>'tab'+(tabSeq++);
+function freshState(name){return{doc:{w:800,h:600,name:name||'Untitled'},shapes:[],layers:[],activeLayer:null,sel:[],tool:'select',zoom:1,panX:80,panY:60,style:JSON.parse(JSON.stringify(DEFAULT_STYLE))};}
+function makeTab(st,dirty){return{id:tabId(),state:st,history:[],future:[],committed:null,dirty:!!dirty};}
+function bumpIds(st){let mu=0,ml=0;(st.shapes||[]).forEach(sh=>{const n=+String(sh.id).replace(/^s/,'');if(n>mu)mu=n;});(st.layers||[]).forEach(l=>{const n=+String(l.id).replace(/^L/,'');if(n>ml)ml=n;});if(mu>=uidc)uidc=mu+1;if(ml>=lidc)lidc=ml+1;}
 let uidc=1;const uid=()=>'s'+(uidc++);
 let lidc=1;const luid=()=>'L'+(lidc++);
 let collapsedLayers=new Set();
@@ -934,13 +957,87 @@ function distToSeg(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l2=dx*dx+dy*dy;if(!l2)retu
 
 //////////////////// HISTORY ////////////////////
 function snapshot(){return JSON.stringify({doc:state.doc,shapes:state.shapes,layers:state.layers,activeLayer:state.activeLayer});}
-function pushHistory(){history.push(committed);if(history.length>200)history.shift();committed=snapshot();future=[];autosave();updateUndoBtns();}
+function pushHistory(){history.push(committed);if(history.length>200)history.shift();committed=snapshot();future=[];if(tabs[activeDoc]&&!tabs[activeDoc].dirty){tabs[activeDoc].dirty=true;renderTabs();}autosave();updateUndoBtns();}
 function resetHistory(){history=[];future=[];committed=snapshot();autosave();updateUndoBtns();}
 function restore(str){const o=JSON.parse(str);state.doc=o.doc;if(!state.doc.name)state.doc.name='Untitled';state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();healCrops();state.sel=state.sel.filter(id=>state.shapes.some(s=>s.id===id));render();refreshPanels();updateDocName();}
 function undo(){if(!history.length)return;future.push(committed);const prev=history.pop();committed=prev;restore(prev);updateUndoBtns();autosave();}
 function redo(){if(!future.length)return;history.push(committed);const nxt=future.pop();committed=nxt;restore(nxt);updateUndoBtns();autosave();}
 function updateUndoBtns(){const u=document.querySelector('[data-act="undo"]'),r=document.querySelector('[data-act="redo"]');if(u)u.classList.toggle('disabled',!history.length);if(r)r.classList.toggle('disabled',!future.length);}
-function autosave(){try{localStorage.setItem('graphic-studio-doc',snapshot());}catch(_){}}
+function autosave(){sessionSave();}
+function sessionSave(){
+  if(!tabs.length)return;
+  commitActiveTab();
+  try{
+    const data={v:1,active:activeDoc,tabs:tabs.map(t=>({
+      doc:t.state.doc,shapes:t.state.shapes,layers:t.state.layers,activeLayer:t.state.activeLayer,
+      zoom:t.state.zoom,panX:t.state.panX,panY:t.state.panY,dirty:t.dirty}))};
+    localStorage.setItem('graphic-studio-session',JSON.stringify(data));
+  }catch(_){}
+}
+function commitActiveTab(){const t=tabs[activeDoc];if(!t)return;t.state=state;t.history=history;t.future=future;t.committed=committed;}
+function activateTab(i,skipCommit){
+  if(i<0||i>=tabs.length)return;
+  if(!skipCommit)commitActiveTab();
+  activeDoc=i;const t=tabs[i];
+  state=t.state;history=t.history;future=t.future;committed=t.committed;
+  drag=null;penDraft=null;cropTarget=null;editing=null;collapsedLayers.clear();
+  ensureLayers();healCrops();
+  if(committed===null){committed=snapshot();t.committed=committed;}
+  setToolUI();render();updateViewport();refreshPanels();updateDocName();updateUndoBtns();renderTabs();
+}
+function renderTabs(){
+  const bar=document.getElementById('docTabs');if(!bar)return;bar.innerHTML='';
+  tabs.forEach((t,i)=>{
+    const el=document.createElement('div');el.className='doctab'+(i===activeDoc?' active':'')+(t.dirty?' dirty':'');
+    const dot=document.createElement('span');dot.className='dt-dot';
+    const nm=document.createElement('span');nm.className='dt-name';nm.textContent=t.state.doc.name||'Untitled';
+    const x=document.createElement('button');x.className='dt-close';x.textContent='×';x.title='Close document';
+    x.onclick=e=>{e.stopPropagation();closeTab(i);};
+    el.append(dot,nm,x);
+    el.onclick=()=>{if(i!==activeDoc)activateTab(i);};
+    nm.ondblclick=e=>{e.stopPropagation();editTabName(i,nm);};
+    bar.append(el);
+  });
+  const add=document.createElement('button');add.className='dt-add';add.textContent='+';add.title='New document';
+  add.onclick=()=>newTab();bar.append(add);
+}
+function editTabName(i,nm){
+  if(i!==activeDoc)activateTab(i);
+  nm.contentEditable='plaintext-only';nm.spellcheck=false;nm.focus();
+  const r=document.createRange();r.selectNodeContents(nm);const s=getSelection();s.removeAllRanges();s.addRange(r);
+  const commit=()=>{nm.contentEditable='false';const v=(nm.textContent||'').replace(/\s+/g,' ').trim()||'Untitled';tabs[i].state.doc.name=v;if(i===activeDoc)updateDocName();renderTabs();sessionSave();};
+  nm.onblur=commit;
+  nm.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();nm.blur();}else if(e.key==='Escape'){e.preventDefault();nm.textContent=tabs[i].state.doc.name||'Untitled';nm.blur();}};
+}
+function newTab(){const st=freshState('Untitled');tabs.push(makeTab(st,false));activateTab(tabs.length-1);sessionSave();}
+function closeTab(i){
+  const t=tabs[i];if(!t)return;
+  if(t.dirty&&!confirm('Close “'+(t.state.doc.name||'Untitled')+'”? Unsaved changes will be lost.'))return;
+  if(i!==activeDoc)commitActiveTab();
+  tabs.splice(i,1);
+  if(!tabs.length){tabs.push(makeTab(freshState('Untitled'),false));activeDoc=0;activateTab(0,true);sessionSave();return;}
+  let next=activeDoc;
+  if(i<activeDoc)next=activeDoc-1;else if(i===activeDoc)next=Math.min(activeDoc,tabs.length-1);
+  activeDoc=next;activateTab(next,true);sessionSave();
+}
+function loadSession(){
+  let sess=null;try{sess=JSON.parse(localStorage.getItem('graphic-studio-session')||'null');}catch(_){}
+  let needFit=false;
+  if(sess&&Array.isArray(sess.tabs)&&sess.tabs.length){
+    tabs=sess.tabs.map(td=>{const st=freshState(td.doc&&td.doc.name);st.doc=td.doc||st.doc;if(!st.doc.name)st.doc.name='Untitled';st.shapes=td.shapes||[];st.layers=td.layers||[];st.activeLayer=td.activeLayer;st.zoom=td.zoom||1;st.panX=td.panX!=null?td.panX:80;st.panY=td.panY!=null?td.panY:60;return makeTab(st,td.dirty);});
+    activeDoc=Math.max(0,Math.min(sess.active||0,tabs.length-1));
+  }else{
+    const st=freshState('Untitled');const old=localStorage.getItem('graphic-studio-doc');
+    if(old){try{const o=JSON.parse(old);if(o.shapes&&o.shapes.length){st.doc=o.doc;if(!st.doc.name)st.doc.name='Untitled';st.shapes=o.shapes;st.layers=o.layers||[];st.activeLayer=o.activeLayer;}else seedDemoInto(st);}catch(_){seedDemoInto(st);}}
+    else seedDemoInto(st);
+    tabs=[makeTab(st,false)];activeDoc=0;needFit=true;
+  }
+  tabs.forEach(t=>bumpIds(t.state));
+  activateTab(activeDoc,true);
+  dedupeIds();
+  if(needFit){zoomFit();setTimeout(()=>{zoomFit();sessionSave();},60);}
+  renderTabs();sessionSave();
+}
 
 //////////////////// ADD SHAPES ////////////////////
 function baseStyle(){const s=state.style;const o={fill:s.fill,stroke:s.stroke,strokeWidth:s.strokeWidth,opacity:s.opacity,fillOn:s.fillOn,strokeOn:s.strokeOn,fillOpacity:s.fillOpacity??1,strokeOpacity:s.strokeOpacity??1,strokePos:s.strokePos||'center',cap:s.cap,join:s.join,miter:s.miter,dash:s.dash,blend:s.blend,visible:true,locked:false,rot:0,shear:0};if(s.fillGrad)o.fillGrad=JSON.parse(JSON.stringify(s.fillGrad));if(s.fillSolid)o.fillSolid=s.fillSolid;return o;}
@@ -1245,7 +1342,7 @@ function applyLibGradToFill(id){const lib=allGradients().find(x=>x.id===id);if(!
 
 //////////////////// INSPECTOR (tabbed palette) ////////////////////
 const INSP_TABS=[
-  {key:'geometry',name:'Position',icon:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/>'},
+  {key:'geometry',name:'Size',icon:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/>'},
   {key:'appearance',name:'Style',icon:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 010 16z" fill="currentColor" stroke="none"/>'},
   {key:'text',name:'Text',icon:'<path d="M6 20l6-15 6 15M8.5 14h7"/>'},
   {key:'styles',name:'Library',icon:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>'},
@@ -2019,17 +2116,17 @@ async function runExport(){
 }
 async function saveDoc(){const nm=((state.doc.name||'Untitled').replace(/[\\/:*?"<>|]/g,'_'))+'.json';
   const saved=await saveBlob(new Blob([JSON.stringify({version:4,doc:state.doc,layers:state.layers,activeLayer:state.activeLayer,shapes:state.shapes,swatches:customSwatches,gradients:customGradients})],{type:'application/json'}),nm);
-  if(saved){const base=String(saved).replace(/\.json$/i,'').trim();if(base){state.doc.name=base;updateDocName();autosave();}}}
+  if(saved){const base=String(saved).replace(/\.json$/i,'').trim();if(base){state.doc.name=base;updateDocName();}if(tabs[activeDoc])tabs[activeDoc].dirty=false;renderTabs();autosave();}}
 const docNameEl=document.getElementById('docName');
 function updateDocName(){if(docNameEl&&document.activeElement!==docNameEl)docNameEl.textContent=state.doc.name||'Untitled';}
 docNameEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();docNameEl.blur();}else if(e.key==='Escape'){e.preventDefault();updateDocName();docNameEl.blur();}});
-docNameEl.addEventListener('blur',()=>{const n=(docNameEl.textContent||'').replace(/\s+/g,' ').trim()||'Untitled';state.doc.name=n;docNameEl.textContent=n;autosave();});
+docNameEl.addEventListener('blur',()=>{const n=(docNameEl.textContent||'').replace(/\s+/g,' ').trim()||'Untitled';state.doc.name=n;docNameEl.textContent=n;renderTabs();autosave();});
 function mergeLibraries(o){
   if(Array.isArray(o.gradients)){for(const g of o.gradients){const i=customGradients.findIndex(x=>x.id===g.id);if(i>=0)customGradients[i]=g;else customGradients.push(g);}saveGradients();}
   if(Array.isArray(o.swatches)){for(const c of o.swatches)if(!customSwatches.includes(c))customSwatches.push(c);saveSwatches();}}
 function openFile(){document.getElementById('fileInput').click();}
-document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;ensureLayers();dedupeIds();mergeLibraries(o);state.doc.name=f.name.replace(/\.json$/i,'')||state.doc.name||'Untitled';}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}state.sel=[];resetHistory();render();refreshPanels();zoomFit();updateDocName();}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
-function newDoc(){if(state.shapes.length&&!confirm('Start a new document? Unsaved work will be lost.'))return;state.shapes=[];state.sel=[];state.layers=[];state.activeLayer=null;collapsedLayers.clear();state.doc.name='Untitled';ensureLayers();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
+document.getElementById('fileInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{if(f.name.endsWith('.json')){const o=JSON.parse(r.result);const nm=f.name.replace(/\.json$/i,'')||'Untitled';const st=freshState(nm);st.doc=o.doc||st.doc;st.doc.name=nm;st.shapes=o.shapes||[];st.layers=o.layers||[];st.activeLayer=o.activeLayer;mergeLibraries(o);bumpIds(st);commitActiveTab();tabs.push(makeTab(st,false));activeDoc=tabs.length-1;activateTab(activeDoc,true);dedupeIds();zoomFit();renderTabs();sessionSave();}else{alert('SVG import is limited in this version — use JSON to reopen saved work.');return;}}catch(err){alert('Could not open file: '+err.message);}};r.readAsText(f);e.target.value='';});
+function newDoc(){newTab();}
 
 //////////////////// KEYBOARD ////////////////////
 window.addEventListener('keydown',e=>{
@@ -2113,15 +2210,11 @@ document.getElementById('canvasModal').onclick=e=>{if(e.target.id==='canvasModal
   const op=document.getElementById('bOpacity');op.oninput=()=>{applyStyle('opacity',+op.value,false);document.getElementById('bOpacityV').textContent=Math.round(op.value*100)+'%';};op.onchange=()=>applyStyle('opacity',+op.value,true);})();
 
 //////////////////// INIT ////////////////////
-function init(){buildStage();buildTools();buildMenus();buildPanels();setToolUI();
-  const saved=localStorage.getItem('graphic-studio-doc');
-  if(saved){try{const o=JSON.parse(saved);if(o.shapes&&o.shapes.length){state.doc=o.doc;state.shapes=o.shapes;state.layers=o.layers||[];state.activeLayer=o.activeLayer;}else seedDemo();}catch(_){seedDemo();}}else seedDemo();
-  if(!state.doc.name)state.doc.name='Untitled';
-  ensureLayers();dedupeIds();healCrops();resetHistory();render();refreshPanels();zoomFit();updateDocName();}
-function seedDemo(){const bg=luid(),ct=luid();
-  state.layers=[{id:bg,name:'Background',visible:true,locked:false},{id:ct,name:'Content',visible:true,locked:false}];
-  state.activeLayer=ct;collapsedLayers.clear();
-  state.shapes=[
+function init(){buildStage();buildTools();buildMenus();buildPanels();setToolUI();loadSession();}
+function seedDemoInto(st){const bg=luid(),ct=luid();
+  st.layers=[{id:bg,name:'Background',visible:true,locked:false},{id:ct,name:'Content',visible:true,locked:false}];
+  st.activeLayer=ct;
+  st.shapes=[
   {id:uid(),layerId:bg,type:'rect',name:'Card',x:120,y:120,w:560,h:360,rx:24,fill:'url(#g-blue)',stroke:'#1b52c9',strokeWidth:2,opacity:1,fillOn:true,strokeOn:true,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
   {id:uid(),layerId:bg,type:'ellipse',name:'Accent',x:470,y:70,w:180,h:180,fill:'url(#g-orange)',stroke:'#fff',strokeWidth:0,opacity:.95,fillOn:true,strokeOn:false,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
   {id:uid(),layerId:ct,type:'star',name:'Star',x:180,y:180,w:120,h:120,sides:5,starRatio:.45,fill:'url(#g-gold)',stroke:'#f59f00',strokeWidth:2,opacity:1,fillOn:true,strokeOn:true,cap:'round',join:'round',miter:4,dash:'',blend:'normal',visible:true,rot:0,shear:0},
