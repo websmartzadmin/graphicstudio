@@ -22,9 +22,10 @@ Commit message style: `BUILD N: short summary` + a few bullet points of what cha
 
 ## Running / testing locally
 
-- Simplest: open `index.html` directly in Chrome and hard-refresh (Ctrl+F5) to test; confirm the BUILD badge.
-- Optional dev server (serves the folder with correct MIME types on port 8777):
-  `powershell -File server.ps1`
+- Simplest: open `index.html` directly in Chrome and hard-refresh (Ctrl+F5 on Windows, Cmd+Shift+R on Mac) to test; confirm the BUILD badge.
+- Optional dev server on port 8777 (serves the folder with correct MIME types):
+  - **Windows:** `powershell -File server.ps1`
+  - **Mac / Linux:** `python3 -m http.server 8777` (run from the repo folder), then open http://localhost:8777. `server.ps1` is Windows-only and won't run on macOS.
 
 ## Files
 
