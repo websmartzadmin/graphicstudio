@@ -247,6 +247,8 @@
   .tabpane[data-pane="text"] .seg button{padding:7px 0;}
   .tabpane[data-pane="text"] .seg button svg{width:20px;height:20px;}
   .tabpane[data-pane="text"] .tbstyle button{font-size:16px;}
+  .tabpane[data-pane="text"] .ctl>select,.tabpane[data-pane="text"] .ctl>.stepper,.tabpane[data-pane="text"] .ctl>.seg{flex:1;width:auto;min-width:0;}
+  .tabpane[data-pane="text"] .tunit{flex:0 0 34px;width:34px;color:var(--muted);font-size:11px;text-align:left;}
   .hint{padding:14px;color:var(--muted);font-size:12px;line-height:1.5;text-align:center;}
   .btnrow{display:flex;gap:6px;padding:6px 12px;flex-wrap:wrap;}
   .btnrow button{flex:1;min-width:56px;background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:6px;border-radius:6px;cursor:pointer;font-size:11px;}
@@ -467,7 +469,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 119</span></div>
+    <div class="brand">Graphic <small>Studio</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 120</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1296,13 +1298,13 @@ function fillText(box){const sel=selShapes(),txt=sel.filter(s=>s.type==='text'),
   if(!txt.length&&state.tool!=='text'){box.innerHTML='<div class="emptynote">Select a text object (or pick the Text tool) to edit type.</div>';return;}
   const alignBtn=(a,svg,tip)=>`<button data-talign="${a}" class="${(s.align||'start')===a?'on':''}" title="${tip}"><svg viewBox="0 0 24 24">${svg}</svg></button>`;
   box.innerHTML=`
-    <div class="row"><label>Font</label><div class="ctl"><select id="txFont">${FONTS.map(f=>`<option value="${f}"${(s.fontFamily||FONTS[0])===f?' selected':''}>${f.split(',')[0]}</option>`).join('')}</select></div></div>
-    <div class="row"><label>Weight</label><div class="ctl"><select id="txWeight">${['300','400','500','600','700','800'].map(w=>`<option${String(s.fontWeight||'400')===w?' selected':''}>${w}</option>`).join('')}</select></div></div>
-    <div class="row"><label>Size</label><div class="ctl"><input type="number" id="txSize" min="4" step="1" value="${Math.round(s.fontSize||32)}"><span style="color:var(--muted)">pt</span></div></div>
-    <div class="row"><label>Style</label><div class="ctl"><div class="seg tbstyle"><button data-tstyle="bold" class="${parseInt(s.fontWeight||400)>=600?'on':''}" title="Bold"><b>B</b></button><button data-tstyle="italic" class="${s.fontStyle==='italic'?'on':''}" title="Italic"><i>I</i></button><button data-tstyle="underline" class="${s.underline?'on':''}" title="Underline"><span style="text-decoration:underline">U</span></button></div></div></div>
-    <div class="row"><label>Align</label><div class="ctl"><div class="seg">${alignBtn('start','<path d="M4 6h16M4 12h11M4 18h14"/>','Align left')}${alignBtn('middle','<path d="M4 6h16M7 12h10M5 18h14"/>','Align center')}${alignBtn('end','<path d="M4 6h16M9 12h11M6 18h14"/>','Align right')}${alignBtn('justify','<path d="M4 6h16M4 12h16M4 18h16"/>','Justify')}</div></div></div>
-    <div class="row"><label>Spacing</label><div class="ctl"><input type="number" id="txTrack" step="0.5" value="${Math.round((s.letterSpacing||0)*10)/10}"><span style="color:var(--muted)">char</span></div></div>
-    <div class="row"><label>Line</label><div class="ctl"><input type="number" id="txLead" step="0.05" min="0.5" value="${s.lineHeight||1.2}"><span style="color:var(--muted)">×</span></div></div>`;
+    <div class="row"><label>Font</label><div class="ctl"><select id="txFont">${FONTS.map(f=>`<option value="${f}"${(s.fontFamily||FONTS[0])===f?' selected':''}>${f.split(',')[0]}</option>`).join('')}</select><span class="tunit"></span></div></div>
+    <div class="row"><label>Weight</label><div class="ctl"><select id="txWeight">${['300','400','500','600','700','800'].map(w=>`<option${String(s.fontWeight||'400')===w?' selected':''}>${w}</option>`).join('')}</select><span class="tunit"></span></div></div>
+    <div class="row"><label>Size</label><div class="ctl"><input type="number" id="txSize" min="4" step="1" value="${Math.round(s.fontSize||32)}"><span class="tunit">pt</span></div></div>
+    <div class="row"><label>Style</label><div class="ctl"><div class="seg tbstyle"><button data-tstyle="bold" class="${parseInt(s.fontWeight||400)>=600?'on':''}" title="Bold"><b>B</b></button><button data-tstyle="italic" class="${s.fontStyle==='italic'?'on':''}" title="Italic"><i>I</i></button><button data-tstyle="underline" class="${s.underline?'on':''}" title="Underline"><span style="text-decoration:underline">U</span></button></div><span class="tunit"></span></div></div>
+    <div class="row"><label>Align</label><div class="ctl"><div class="seg">${alignBtn('start','<path d="M4 6h16M4 12h11M4 18h14"/>','Align left')}${alignBtn('middle','<path d="M4 6h16M7 12h10M5 18h14"/>','Align center')}${alignBtn('end','<path d="M4 6h16M9 12h11M6 18h14"/>','Align right')}${alignBtn('justify','<path d="M4 6h16M4 12h16M4 18h16"/>','Justify')}</div><span class="tunit"></span></div></div>
+    <div class="row"><label>Spacing</label><div class="ctl"><input type="number" id="txTrack" step="0.5" value="${Math.round((s.letterSpacing||0)*10)/10}"><span class="tunit">char</span></div></div>
+    <div class="row"><label>Line</label><div class="ctl"><input type="number" id="txLead" step="0.05" min="0.5" value="${s.lineHeight||1.2}"><span class="tunit">×</span></div></div>`;
   const q=id=>box.querySelector('#'+id);
   q('txFont').onchange=e=>applyText('fontFamily',e.target.value,true);
   q('txWeight').onchange=e=>applyText('fontWeight',e.target.value,true);
