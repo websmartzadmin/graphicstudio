@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0b7cff">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Nunito:wght@400;700&family=Inter:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Bebas+Neue&family=Anton&family=Pacifico&family=Lobster&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Poppins:wght@400;700&family=Raleway:wght@400;700&family=Nunito:wght@400;700&family=Inter:wght@400;700&family=Oswald:wght@400;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Bebas+Neue&family=Anton&family=Pacifico&family=Lobster&family=Dancing+Script:wght@400;700&family=Work+Sans:wght@400;700&family=Rubik:wght@400;700&family=DM+Sans:wght@400;700&family=Manrope:wght@400;700&family=Barlow:wght@400;700&family=Josefin+Sans:wght@400;700&family=Quicksand:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Bitter:wght@400;700&family=EB+Garamond:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Abril+Fatface&family=Righteous&family=Fjalla+One&family=Archivo+Black&family=Comfortaa:wght@400;700&family=Teko:wght@400;700&family=Caveat:wght@400;700&family=Satisfy&family=Great+Vibes&family=Permanent+Marker&family=Source+Code+Pro:wght@400;700&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#2c2c30; --panel:#343438; --panel2:#3d3d43; --line:#47474d; --line2:#54545b;
@@ -221,6 +221,28 @@
   .dsrow .dsswatch{flex:1;width:auto;height:44px;margin-top:0;min-width:0;}
   .dsrow .dsswatch#docBg{flex:0 0 auto;width:44px;height:44px;}
   .dsswatch.transp{background:repeating-conic-gradient(#b8b8b8 0 25%,#fff 0 50%) 50%/14px 14px;}
+  /* Font sample popup */
+  #fontSample{position:fixed;z-index:9999;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;box-shadow:0 8px 24px #0007;color:var(--text);pointer-events:none;opacity:0;transition:opacity .12s;white-space:nowrap;max-width:90vw;overflow:hidden;}
+  #fontSample.show{opacity:1;}
+  #fontSample .fs-name{font-size:11px;color:var(--muted);margin-bottom:3px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  #fontSample .fs-sample{font-size:26px;line-height:1.15;}
+  /* Custom font picker */
+  .fpickhost{flex:1;min-width:0;display:flex;}
+  .fpick{position:relative;width:100%;}
+  .fpick-btn{width:100%;text-align:left;background:var(--panel2) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="%239c9ca4" stroke-width="1.5"/></svg>') no-repeat right 7px center;border:1px solid var(--line2);color:var(--text);border-radius:5px;padding:3px 22px 3px 8px;font-size:13px;height:24px;line-height:16px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fpick-btn:hover{border-color:var(--accent);}
+  .fpick-panel{position:fixed;z-index:10000;background:var(--panel);border:1px solid var(--line2);border-radius:8px;box-shadow:0 12px 32px #0009;padding:6px;display:flex;flex-direction:column;max-height:min(360px,70vh);}
+  .fpick-search{background:var(--panel2);border:1px solid var(--line2);color:var(--text);border-radius:5px;padding:5px 8px;font-size:12px;margin-bottom:6px;outline:none;-webkit-user-select:text;user-select:text;}
+  .fpick-search:focus{border-color:var(--accent);}
+  .fpick-list{overflow-y:auto;overflow-x:hidden;}
+  .fpick-item{padding:5px 10px;border-radius:5px;font-size:18px;line-height:1.35;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fpick-item:hover{background:var(--hover);}
+  .fpick-item.sel{background:var(--accent);color:#fff;}
+  .fpick-empty{padding:10px;color:var(--muted);font-size:12px;}
+  /* Gradient angle dial */
+  #fgAngle{width:52px;flex:0 0 auto;}
+  .graddial{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;cursor:grab;flex:0 0 auto;margin-left:6px;touch-action:none;-webkit-user-select:none;user-select:none;}
+  .graddial:active{cursor:grabbing;}
   .libtargetrow{display:flex;align-items:center;gap:8px;padding:8px 12px 2px;}
   .libtargetlbl{font-size:11px;color:var(--muted);}
   .seg.libtarget{flex:1;}
@@ -322,6 +344,7 @@
   .lyr-tri.open svg{transform:rotate(90deg);}
   .lyr-tri:hover{color:var(--text);}
   .lyr-eye,.lyr-lock{width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--muted);border-radius:4px;cursor:pointer;flex:0 0 auto;}
+  .lyr-lock{width:22px;height:22px;}
   .lyr-eye:hover,.lyr-lock:hover{background:var(--hover);color:var(--text);}
   .lyr-lock.on{color:var(--accent);}
   .lyr-name{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -485,7 +508,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 125</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 131</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -642,7 +665,8 @@ const GRADIENTS=[
 ];
 const SOLIDS=['#ffffff','#c6ccd4','#7a828c','#111418','#ff3b30','#3d8bff','#34c759','#ff9500','#ffd60a','#af52de','#ff2d55','#5ac8fa'];
 const FONTS=['Helvetica, Arial, sans-serif','Arial, sans-serif','Georgia, serif','Times New Roman, serif','Courier New, monospace','Verdana, sans-serif','Trebuchet MS, sans-serif','Impact, sans-serif','Comic Sans MS, cursive',
-  'Roboto, sans-serif','Open Sans, sans-serif','Lato, sans-serif','Montserrat, sans-serif','Poppins, sans-serif','Raleway, sans-serif','Nunito, sans-serif','Inter, sans-serif','Oswald, sans-serif','Merriweather, serif','Playfair Display, serif','Roboto Mono, monospace','Bebas Neue, sans-serif','Anton, sans-serif','Pacifico, cursive','Lobster, cursive','Dancing Script, cursive'];
+  'Roboto, sans-serif','Open Sans, sans-serif','Lato, sans-serif','Montserrat, sans-serif','Poppins, sans-serif','Raleway, sans-serif','Nunito, sans-serif','Inter, sans-serif','Oswald, sans-serif','Merriweather, serif','Playfair Display, serif','Roboto Mono, monospace','Bebas Neue, sans-serif','Anton, sans-serif','Pacifico, cursive','Lobster, cursive','Dancing Script, cursive',
+  'Work Sans, sans-serif','Rubik, sans-serif','DM Sans, sans-serif','Manrope, sans-serif','Barlow, sans-serif','Josefin Sans, sans-serif','Quicksand, sans-serif','Lora, serif','PT Serif, serif','Bitter, serif','EB Garamond, serif','Libre Baskerville, serif','Abril Fatface, serif','Righteous, sans-serif','Fjalla One, sans-serif','Archivo Black, sans-serif','Comfortaa, sans-serif','Teko, sans-serif','Caveat, cursive','Satisfy, cursive','Great Vibes, cursive','Permanent Marker, cursive','Source Code Pro, monospace','Space Mono, monospace','JetBrains Mono, monospace'];
 
 //////////////////// STATE ////////////////////
 const SVGNS="http://www.w3.org/2000/svg";
@@ -836,11 +860,17 @@ function buildShapeElRaw(s,defs){defs=defs||gDefs;
   if(s.type==='text')return buildTextEl(s);
   if(s.type==='image'){const tr=transformStr(s);
     const ix=s.imgX==null?s.x:s.imgX,iy=s.imgY==null?s.y:s.imgY,iw=s.imgW==null?s.w:s.imgW,ih=s.imgH==null?s.h:s.imgH;
-    const e=el('image',{x:ix,y:iy,width:iw,height:ih,preserveAspectRatio:'none',opacity:s.opacity});e.setAttributeNS('http://www.w3.org/1999/xlink','href',s.href);e.setAttribute('href',s.href);
+    const e=el('image',{x:ix,y:iy,width:iw,height:ih,preserveAspectRatio:'none'});e.setAttributeNS('http://www.w3.org/1999/xlink','href',s.href);e.setAttribute('href',s.href);
     const cropped=(ix!==s.x||iy!==s.y||iw!==s.w||ih!==s.h);
-    if(!cropped||s===cropTarget){if(tr)e.setAttribute('transform',tr);if(s.blend&&s.blend!=='normal')e.style.mixBlendMode=s.blend;return e;}
-    const cid='crop_'+s.id,cp=el('clipPath',{id:cid,clipPathUnits:'userSpaceOnUse'});cp.append(el('rect',{x:s.x,y:s.y,width:s.w,height:s.h}));defs.append(cp);
-    const g=el('g',{'clip-path':'url(#'+cid+')'});g.append(e);if(tr)g.setAttribute('transform',tr);if(s.blend&&s.blend!=='normal')g.style.mixBlendMode=s.blend;return g;}
+    const hasBorder=s.strokeOn&&s.strokeWidth>0&&s!==cropTarget;
+    let inner=e;
+    if(cropped&&s!==cropTarget){const cid='crop_'+s.id,cp=el('clipPath',{id:cid,clipPathUnits:'userSpaceOnUse'});cp.append(el('rect',{x:s.x,y:s.y,width:s.w,height:s.h}));defs.append(cp);const cg=el('g',{'clip-path':'url(#'+cid+')'});cg.append(e);inner=cg;}
+    if(!hasBorder){inner.setAttribute('opacity',s.opacity);if(tr)inner.setAttribute('transform',tr);if(s.blend&&s.blend!=='normal')inner.style.mixBlendMode=s.blend;return inner;}
+    const g=el('g',{});g.append(inner);
+    const br=el('rect',{x:s.x,y:s.y,width:s.w,height:s.h,fill:'none',stroke:s.stroke,'stroke-width':s.strokeWidth,'stroke-linejoin':s.join||'miter'});
+    if(s.dash)br.setAttribute('stroke-dasharray',s.dash);
+    if(s.strokeOpacity!=null&&s.strokeOpacity<1)br.setAttribute('stroke-opacity',s.strokeOpacity);
+    g.append(br);g.setAttribute('opacity',s.opacity);if(tr)g.setAttribute('transform',tr);if(s.blend&&s.blend!=='normal')g.style.mixBlendMode=s.blend;return g;}
   const pos=s.strokePos||'center',tr=transformStr(s);
   if(s.strokeOn&&isClosed(s)&&pos!=='center'&&s.strokeWidth>0){
     const g=el('g',{});
@@ -948,8 +978,8 @@ function raiseLayer(){const i=state.layers.findIndex(l=>l.id===state.activeLayer
 function lowerLayer(){const i=state.layers.findIndex(l=>l.id===state.activeLayer);if(i<=0)return;const[l]=state.layers.splice(i,1);state.layers.splice(i-1,0,l);pushHistory();render();refreshPanels();}
 function toggleLayerVis(L){L.visible=L.visible===false?true:false;if(L.visible===false)state.sel=state.sel.filter(id=>{const s=state.shapes.find(x=>x.id===id);return !s||s.layerId!==L.id;});pushHistory();render();refreshPanels();}
 function toggleLayerLock(L){L.locked=!L.locked;if(L.locked)state.sel=state.sel.filter(id=>{const s=state.shapes.find(x=>x.id===id);return !s||s.layerId!==L.id;});pushHistory();render();refreshPanels();}
-function lockIcon(){return'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';}
-function unlockIcon(){return'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 017-2"/></svg>';}
+function lockIcon(){return'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2.5" fill="currentColor" stroke="none"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';}
+function unlockIcon(){return'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2.5" fill="currentColor" stroke="none"/><path d="M8 11V7a4 4 0 017-2"/></svg>';}
 function selectOnly(id){state.sel=id?[id]:[];syncStyleFromSel();render();refreshPanels();}
 function hitTest(p){const order=renderOrder();for(let i=order.length-1;i>=0;i--){const s=order[i];if(!shapeInteractive(s))continue;const lp=toLocal(p,s);const b=shapeBBox(s);const pad=(s.strokeOn?s.strokeWidth/2:0)+4/state.zoom;
   if(s.type==='line'){if(distToSeg(lp,{x:s.x1,y:s.y1},{x:s.x2,y:s.y2})<pad+3)return s;continue;}
@@ -1177,7 +1207,8 @@ function updateHandle(p,e){const s=drag.shape;
   if(hasE)nw=Math.max(2,lp.x-b.x);
   if(hasN)nh=Math.max(2,(b.y+b.h)-lp.y);
   if(hasS)nh=Math.max(2,lp.y-b.y);
-  const isCorner=(hasW||hasE)&&(hasN||hasS),proportional=sizeLocked?!e.shiftKey:e.shiftKey;
+  const isCorner=(hasW||hasE)&&(hasN||hasS);let proportional=sizeLocked?!e.shiftKey:e.shiftKey;
+  if(s.type==='text'&&isCorner)proportional=true;
   if(proportional&&b.h>0&&b.w>0){const r=b.w/b.h;if(isCorner){if(nw/nh>r)nw=nh*r;else nh=nw/r;}else if(hasW||hasE)nh=nw/r;else nw=nh*r;}
   let nx=b.x,ny=b.y;
   if(hasW)nx=(b.x+b.w)-nw;
@@ -1397,7 +1428,7 @@ function fillText(box){const sel=selShapes(),txt=sel.filter(s=>s.type==='text'),
   if(!txt.length&&state.tool!=='text'){box.innerHTML='<div class="emptynote">Select a text object (or pick the Text tool) to edit type.</div>';return;}
   const alignBtn=(a,svg,tip)=>`<button data-talign="${a}" class="${(s.align||'start')===a?'on':''}" title="${tip}"><svg viewBox="0 0 24 24">${svg}</svg></button>`;
   box.innerHTML=`
-    <div class="row"><label>Font</label><div class="ctl"><select id="txFont">${FONTS.map(f=>`<option value="${f}"${(s.fontFamily||FONTS[0])===f?' selected':''}>${f.split(',')[0]}</option>`).join('')}</select><span class="tunit"></span></div></div>
+    <div class="row"><label>Font</label><div class="ctl"><span id="txFontHost" class="fpickhost"></span><span class="tunit"></span></div></div>
     <div class="row"><label>Weight</label><div class="ctl"><select id="txWeight">${['300','400','500','600','700','800'].map(w=>`<option${String(s.fontWeight||'400')===w?' selected':''}>${w}</option>`).join('')}</select><span class="tunit"></span></div></div>
     <div class="row"><label>Size</label><div class="ctl"><input type="number" id="txSize" min="4" step="1" value="${Math.round(s.fontSize||32)}"><span class="tunit">pt</span></div></div>
     <div class="row"><label>Style</label><div class="ctl"><div class="seg tbstyle"><button data-tstyle="bold" class="${parseInt(s.fontWeight||400)>=600?'on':''}" title="Bold"><b>B</b></button><button data-tstyle="italic" class="${s.fontStyle==='italic'?'on':''}" title="Italic"><i>I</i></button><button data-tstyle="underline" class="${s.underline?'on':''}" title="Underline"><span style="text-decoration:underline">U</span></button></div><span class="tunit"></span></div></div>
@@ -1405,7 +1436,7 @@ function fillText(box){const sel=selShapes(),txt=sel.filter(s=>s.type==='text'),
     <div class="row"><label>Spacing</label><div class="ctl"><input type="number" id="txTrack" step="0.5" value="${Math.round((s.letterSpacing||0)*10)/10}"><span class="tunit">char</span></div></div>
     <div class="row"><label>Line</label><div class="ctl"><input type="number" id="txLead" step="0.05" min="0.5" value="${s.lineHeight||1.2}"><span class="tunit">×</span></div></div>`;
   const q=id=>box.querySelector('#'+id);
-  q('txFont').onchange=e=>applyText('fontFamily',e.target.value,true);
+  mountFontPicker('txFontHost',s.fontFamily||FONTS[0],v=>applyText('fontFamily',v,true));
   q('txWeight').onchange=e=>applyText('fontWeight',e.target.value,true);
   const sz=q('txSize');sz.oninput=e=>applyText('fontSize',Math.max(4,+e.target.value||4),false);sz.onchange=e=>applyText('fontSize',Math.max(4,+e.target.value||4),true);
   const tk=q('txTrack');tk.oninput=e=>applyText('letterSpacing',+e.target.value||0,false);tk.onchange=e=>applyText('letterSpacing',+e.target.value||0,true);
@@ -1465,7 +1496,7 @@ function fillGeometry(box){const sels=selShapes();
     if(s.type==='rect')extra=`<div class="geo2col"><div class="geocol"><div class="geohead">Corner</div><div class="geofield"><span class="gi">${CRNICON}</span><input type="number" id="pRx" value="${Math.round(s.rx||0)}" min="0"><span class="unit">px</span></div></div><div class="geocol"></div></div>`;
     if(s.type==='polygon'||s.type==='star')extra+=`<div class="geo2col"><div class="geocol"><div class="geohead">Sides</div><div class="geofield"><span class="gi">${SIDEICON}</span><input type="number" id="pSides" value="${s.sides}" min="3" max="60"><span class="unit"></span></div></div>${s.type==='star'?`<div class="geocol"><div class="geohead">Inner</div><div class="geofield gfrange"><input type="range" id="pRatio" min="0.1" max="0.9" step="0.01" value="${s.starRatio}"></div></div>`:'<div class="geocol"></div>'}</div>`;
     if(s.type==='text'){const SZICON='<svg viewBox="0 0 24 24"><path d="M2 19l5-13 5 13M3.7 14.6h6.6"/><path d="M14 19l3-8 3 8M15.2 16.3h3.6"/></svg>';
-      extra+=`<div class="geo2col onecol"><div class="geocol"><div class="geohead">Font</div><div class="geofield"><select id="tFont">${FONTS.map(f=>`<option value="${f}" ${s.fontFamily===f?'selected':''}>${f.split(',')[0]}</option>`).join('')}</select></div></div></div>
+      extra+=`<div class="geo2col onecol"><div class="geocol"><div class="geohead">Font</div><div class="geofield"><span id="tFontHost" class="fpickhost"></span></div></div></div>
       <div class="geo2col"><div class="geocol"><div class="geohead">Size</div><div class="geofield"><span class="gi">${SZICON}</span><input type="number" id="tSize" value="${Math.round(s.fontSize)}" min="4"><span class="unit">px</span></div></div><div class="geocol"><div class="geohead">Weight</div><div class="geofield"><select id="tWeight">${['300','400','500','600','700','800'].map(w=>`<option ${s.fontWeight===w?'selected':''}>${w}</option>`).join('')}</select></div></div></div>
       <div class="geo2col onecol"><div class="geocol"><button class="chip gfbtn" id="tEdit">Edit text…</button></div></div>`;}
   }
@@ -1535,7 +1566,7 @@ function fillGeometry(box){const sels=selShapes();
     const rx=g('pRx');if(rx)rx.onchange=()=>{s.rx=Math.max(0,+rx.value);pushHistory();render();};
     const sd=g('pSides');if(sd)sd.onchange=()=>{s.sides=Math.max(3,Math.min(60,+sd.value));pushHistory();render();};
     const rt=g('pRatio');if(rt){rt.oninput=()=>{s.starRatio=+rt.value;render();};rt.onchange=()=>pushHistory();}
-    const tf=g('tFont');if(tf)tf.onchange=()=>{s.fontFamily=tf.value;pushHistory();render();refreshPanels();};
+    if(document.getElementById('tFontHost'))mountFontPicker('tFontHost',s.fontFamily||FONTS[0],v=>{s.fontFamily=v;pushHistory();render();refreshPanels();});
     const tsz=g('tSize');if(tsz)tsz.onchange=()=>{s.fontSize=Math.max(4,+tsz.value);pushHistory();render();};
     const tw=g('tWeight');if(tw)tw.onchange=()=>{s.fontWeight=tw.value;pushHistory();render();};
     const te=g('tEdit');if(te)te.onclick=()=>editText(s,false);
@@ -1558,6 +1589,8 @@ function setFillTypeOn(o,type){
     o.fillGrad.type=type;o.fill='url(#fillg_'+(o.id||'style')+')';o.fillOn=true;}}
 function curFillGrad(){const s=curStyle();if(!s.fillGrad)s.fillGrad={type:'linear',angle:-90,stops:[['#5aa0ff',0],['#1b52c9',1]]};return s.fillGrad;}
 function syncFillGrad(commit){const g=curFillGrad();for(const o of styleTargets())if(o!==curStyle()){o.fillGrad=JSON.parse(JSON.stringify(g));o.fill='url(#fillg_'+(o.id||'style')+')';o.fillOn=true;}render();if(commit){pushHistory();refreshPanels();}}
+function fgDialSVG(a){const ph=(90-(+a||0))*Math.PI/180,cx=17,cy=17,r=12.5,ex=(cx+r*Math.cos(ph)).toFixed(1),ey=(cy+r*Math.sin(ph)).toFixed(1);
+  return `<svg width="30" height="30" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15.5" fill="#f7f1dc" stroke="var(--line2)"/><line x1="17" y1="17" x2="${ex}" y2="${ey}" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><circle cx="${ex}" cy="${ey}" r="3.5" fill="var(--accent)"/><circle cx="17" cy="17" r="2.4" fill="#5b6472"/></svg>`;}
 function fillAppearance(box){const s=curStyle();
   const capBtn=(v,svg)=>`<button data-cap="${v}" class="${(s.cap||'round')===v?'on':''}">${svg}</button>`;
   const joinBtn=(v,svg)=>`<button data-join="${v}" class="${(s.join||'round')===v?'on':''}">${svg}</button>`;
@@ -1572,7 +1605,7 @@ function fillAppearance(box){const s=curStyle();
       if(ft==='color'){
         h+=`<div class="row"><label>Color</label><div class="ctl"><span class="attrsw bigsw" data-attrsw="fill" style="background:${paintCss(s,'fill')}"></span><input class="hexin" id="fillHex" spellcheck="false" value="${toHex(s.fill)}"></div></div>`;
       }else{const g=s.fillGrad||{type:ft,angle:-90,stops:[['#5aa0ff',0],['#1b52c9',1]]};if(gradSelStop>=g.stops.length)gradSelStop=0;const sel=g.stops[gradSelStop]||g.stops[0];
-        h+=`<div class="row"><label>Angle</label><div class="ctl"><input type="number" id="fgAngle" value="${g.angle||0}" step="1"${ft==='radial'?' disabled':''}><span style="color:var(--muted)">°</span><button class="fgflip" id="fgFlip" title="Reverse gradient">⇄</button></div></div>`;
+        h+=`<div class="row"><label>Angle</label><div class="ctl"><input type="number" id="fgAngle" value="${g.angle||0}" step="1"${ft==='radial'?' disabled':''}><span style="color:var(--muted)">°</span>${ft==='radial'?'':`<span class="graddial" id="fgDial" title="Drag to set gradient angle">${fgDialSVG(g.angle||0)}</span>`}<button class="fgflip" id="fgFlip" title="Reverse gradient">⇄</button></div></div>`;
         h+=`<div class="gbar" id="fgBar" style="background:${gradToCss(g)}">${g.stops.map((st,i)=>`<div class="gstop2${i===gradSelStop?' sel':''}" data-fgi="${i}" style="left:${st[1]*100}%;--c:${st[0]}"></div>`).join('')}</div>`;
         h+=`<div class="gradHint">Click a stop to edit its color · drag to move · click empty bar to add a stop</div>`;
         h+=`<div class="row"><label>Stop</label><div class="ctl"><span class="gstopsw" id="fgStopSw" style="background:${sel[0]}"></span><input class="hexin" id="fgStopHex" spellcheck="false" value="${toHex(sel[0])}"><input type="number" id="fgStopPos" min="0" max="100" value="${Math.round(sel[1]*100)}"><button id="fgStopDel"${g.stops.length<=2?' disabled':''}>✕</button></div></div>`;
@@ -1637,7 +1670,13 @@ function fillAppearance(box){const s=curStyle();
   if(fgBar){bindStopEls();
     const addAt=cx=>{const r=fgBar.getBoundingClientRect(),p=clamp01((cx-r.left)/r.width),g=curFillGrad(),ss=[...g.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}g.stops.push([col,Math.round(p*1000)/1000]);gradSelStop=g.stops.length-1;syncFillGrad(true);};
     fgBar.onpointerdown=e=>{if(e.target===fgBar)addAt(e.clientX);};}
-  const fgAngle=box.querySelector('#fgAngle');if(fgAngle){fgAngle.oninput=()=>{curFillGrad().angle=+fgAngle.value;render();if(fgBar)fgBar.style.background=gradToCss(curFillGrad());};fgAngle.onchange=()=>syncFillGrad(true);}
+  const fgAngle=box.querySelector('#fgAngle'),fgDial=box.querySelector('#fgDial');
+  if(fgAngle){fgAngle.oninput=()=>{curFillGrad().angle=+fgAngle.value;if(fgDial)fgDial.innerHTML=fgDialSVG(+fgAngle.value);render();if(fgBar)fgBar.style.background=gradToCss(curFillGrad());};fgAngle.onchange=()=>syncFillGrad(true);}
+  if(fgDial){fgDial.onpointerdown=e=>{e.preventDefault();const r=fgDial.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const move=ev=>{const dx=ev.clientX-cx,dy=ev.clientY-cy;let a=Math.round(90-Math.atan2(dy,dx)*180/Math.PI);while(a>180)a-=360;while(a<-180)a+=360;if(ev.shiftKey)a=Math.round(a/15)*15;
+      const g=curFillGrad();g.angle=a;fgDial.innerHTML=fgDialSVG(a);if(fgAngle)fgAngle.value=a;render();if(fgBar)fgBar.style.background=gradToCss(g);};
+    const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);syncFillGrad(true);};
+    move(e);document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};}
   const fgFlip=box.querySelector('#fgFlip');if(fgFlip)fgFlip.onclick=()=>{const g=curFillGrad();g.stops=g.stops.map(st=>[st[0],Math.round((1-st[1])*1000)/1000]);syncFillGrad(true);};
   const fgStopSw=box.querySelector('#fgStopSw');if(fgStopSw)fgStopSw.onclick=()=>openColorPicker(fgStopSw,toHex((curFillGrad().stops[gradSelStop]||curFillGrad().stops[0])[0]),1,hex=>{curFillGrad().stops[gradSelStop][0]=hex;fgSyncUI();render();},()=>syncFillGrad(true));
   const fgStopHex=box.querySelector('#fgStopHex');if(fgStopHex)fgStopHex.onchange=()=>{curFillGrad().stops[gradSelStop][0]=toHex(fgStopHex.value);syncFillGrad(true);};
@@ -1866,6 +1905,57 @@ function cutSel(){if(!state.sel.length)return;copySel();deleteSel();}
 function pasteClip(){if(!clipboard.length)return;const copies=clipboard.map(s=>{const c=JSON.parse(JSON.stringify(s));c.id=uid();reidGrad(c);c.name=s.name+' copy';translateShape(c,14,14);return c;});state.shapes.push(...copies);state.sel=copies.map(c=>c.id);pushHistory();render();refreshPanels();}
 let _toastT=null;
 function toast(msg){let t=document.getElementById('gtoast');if(!t){t=document.createElement('div');t.id='gtoast';document.body.append(t);}t.textContent=msg;t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+let _fontSampleT=null;
+function showFontSample(fontFamily,anchorEl){
+  if(!fontFamily)return;
+  let box=document.getElementById('fontSample');
+  if(!box){box=document.createElement('div');box.id='fontSample';box.innerHTML='<div class="fs-name"></div><div class="fs-sample"></div>';document.body.append(box);}
+  const name=(fontFamily.split(',')[0]||'').replace(/^['"]|['"]$/g,'');
+  box.querySelector('.fs-name').textContent=name;
+  const samp=box.querySelector('.fs-sample');samp.style.fontFamily=fontFamily;samp.textContent='AaBbGg 0123 — The quick brown fox';
+  box.classList.add('show');
+  const r=anchorEl&&anchorEl.getBoundingClientRect?anchorEl.getBoundingClientRect():null;
+  const bw=box.offsetWidth,bh=box.offsetHeight;
+  let left=r?r.left:100,top=r?r.bottom+6:100;
+  if(left+bw>window.innerWidth-8)left=window.innerWidth-8-bw;
+  if(top+bh>window.innerHeight-8)top=r?Math.max(8,r.top-bh-6):8;
+  if(left<8)left=8;if(top<8)top=8;
+  box.style.left=left+'px';box.style.top=top+'px';
+  clearTimeout(_fontSampleT);_fontSampleT=setTimeout(()=>box.classList.remove('show'),1700);
+}
+function makeFontPicker(current,onPick){
+  const wrap=document.createElement('div');wrap.className='fpick';
+  const btn=document.createElement('button');btn.type='button';btn.className='fpick-btn';
+  const setLbl=v=>{btn.textContent=(v||'').split(',')[0];btn.style.fontFamily=v;};
+  setLbl(current);wrap.append(btn);
+  let panel=null,onDoc=null,onKey=null;
+  function close(){if(panel){panel.remove();panel=null;}if(onDoc){document.removeEventListener('mousedown',onDoc,true);document.removeEventListener('keydown',onKey,true);onDoc=null;}}
+  function open(){
+    panel=document.createElement('div');panel.className='fpick-panel';
+    const srch=document.createElement('input');srch.className='fpick-search';srch.placeholder='Search fonts…';srch.spellcheck=false;
+    const list=document.createElement('div');list.className='fpick-list';
+    function render(flt){list.innerHTML='';const q=(flt||'').toLowerCase();
+      const rows=FONTS.filter(f=>f.split(',')[0].toLowerCase().includes(q));
+      for(const f of rows){const it=document.createElement('div');it.className='fpick-item'+(f===current?' sel':'');it.style.fontFamily=f;it.textContent=f.split(',')[0];
+        it.onmousedown=e=>{e.preventDefault();current=f;setLbl(f);close();onPick(f);};list.append(it);}
+      if(!rows.length){const e=document.createElement('div');e.className='fpick-empty';e.textContent='No matching fonts';list.append(e);}}
+    render('');srch.oninput=()=>render(srch.value);
+    panel.append(srch,list);document.body.append(panel);
+    const r=btn.getBoundingClientRect(),pw=Math.max(r.width,220);panel.style.minWidth=pw+'px';
+    const ph=panel.offsetHeight;let left=r.left,top=r.bottom+4;
+    if(top+ph>window.innerHeight-8)top=Math.max(8,r.top-ph-4);
+    if(left+pw>window.innerWidth-8)left=Math.max(8,window.innerWidth-8-pw);
+    panel.style.left=left+'px';panel.style.top=top+'px';
+    const selEl=list.querySelector('.fpick-item.sel');if(selEl)selEl.scrollIntoView({block:'center'});
+    onDoc=e=>{if(panel&&!panel.contains(e.target)&&e.target!==btn)close();};
+    onKey=e=>{if(e.key==='Escape'){e.preventDefault();close();}};
+    document.addEventListener('mousedown',onDoc,true);document.addEventListener('keydown',onKey,true);
+    srch.focus();
+  }
+  btn.onclick=e=>{e.stopPropagation();if(panel)close();else open();};
+  return wrap;
+}
+function mountFontPicker(hostId,current,onPick){const host=document.getElementById(hostId);if(!host)return;host.innerHTML='';host.append(makeFontPicker(current||FONTS[0],onPick));}
 async function doPaste(pt){
   // Shapes copied inside the app paste instantly (no prompt).
   if(clipboard.length){pasteClip();return;}
@@ -1890,7 +1980,7 @@ wrap.addEventListener('drop',e=>{e.preventDefault();const files=[...(e.dataTrans
   const p=toSVG(e.clientX,e.clientY);let off=0;
   files.forEach(f=>{const rd=new FileReader();rd.onload=()=>{const href=rd.result;const im=new Image();
     const place=(w,h)=>{let sw=w||300,sh=h||200;const maxW=state.doc.w*0.9;if(sw>maxW){const k=maxW/sw;sw*=k;sh*=k;}
-      const s={type:'image',name:(f.name||'Image').replace(/\.[^.]+$/,''),x:p.x+off,y:p.y+off,w:Math.round(sw),h:Math.round(sh),href,opacity:1,fillOn:false,strokeOn:false,visible:true,locked:false,rot:0,shear:0,blend:'normal'};
+      const s={type:'image',name:(f.name||'Image').replace(/\.[^.]+$/,''),x:p.x+off,y:p.y+off,w:Math.round(sw),h:Math.round(sh),href,opacity:1,fillOn:false,strokeOn:false,stroke:'#1f2d4d',strokeWidth:2,strokeOpacity:1,join:'miter',dash:'',visible:true,locked:false,rot:0,shear:0,blend:'normal'};
       addShape(s);state.sel=[s.id];off+=18;pushHistory();render();refreshPanels();};
     im.onload=()=>place(im.naturalWidth,im.naturalHeight);im.onerror=()=>place(300,200);im.src=href;};
     rd.readAsDataURL(f);});
@@ -1898,7 +1988,7 @@ wrap.addEventListener('drop',e=>{e.preventDefault();const files=[...(e.dataTrans
 function addImageDataURL(href,name,cx,cy){const im=new Image();
   const place=(w,h)=>{let sw=w||300,sh=h||200;const maxW=state.doc.w*0.9,maxH=state.doc.h*0.9;if(sw>maxW){const k=maxW/sw;sw*=k;sh*=k;}if(sh>maxH){const k=maxH/sh;sw*=k;sh*=k;}
     const x=(cx==null?state.doc.w/2:cx)-sw/2,y=(cy==null?state.doc.h/2:cy)-sh/2;
-    const s={type:'image',name:name||'Pasted Image',x:Math.round(x),y:Math.round(y),w:Math.round(sw),h:Math.round(sh),href,opacity:1,fillOn:false,strokeOn:false,visible:true,locked:false,rot:0,shear:0,blend:'normal'};
+    const s={type:'image',name:name||'Pasted Image',x:Math.round(x),y:Math.round(y),w:Math.round(sw),h:Math.round(sh),href,opacity:1,fillOn:false,strokeOn:false,stroke:'#1f2d4d',strokeWidth:2,strokeOpacity:1,join:'miter',dash:'',visible:true,locked:false,rot:0,shear:0,blend:'normal'};
     addShape(s);state.sel=[s.id];pushHistory();render();refreshPanels();};
   im.onload=()=>place(im.naturalWidth,im.naturalHeight);im.onerror=()=>place(300,200);im.src=href;}
 window.addEventListener('paste',e=>{
@@ -1922,7 +2012,7 @@ function updateToolbar(){const box=document.getElementById('toolopts');if(!box)r
   const selText=sel.find(s=>s.type==='text'),selRect=sel.find(s=>s.type==='rect'),selPoly=sel.find(s=>s.type==='polygon'||s.type==='star');
   let html='';
   if(t==='text'||selText){const s=selText||state.style;
-    html=`<select id="tbFont">${FONTS.map(f=>`<option value="${f}"${(s.fontFamily||FONTS[0])===f?' selected':''}>${f.split(',')[0]}</option>`).join('')}</select>`+
+    html=`<span id="tbFontHost" class="fpickhost" style="flex:0 0 auto;width:130px;"></span>`+
       `<select id="tbWeight">${['300','400','500','600','700','800'].map(w=>`<option${String(s.fontWeight||'400')===w?' selected':''}>${w}</option>`).join('')}</select>`+
       `<span class="seg tbstyle" style="margin:0 3px;"><button data-tstyle="bold" class="${parseInt(s.fontWeight||400)>=600?'on':''}" title="Bold"><b>B</b></button><button data-tstyle="italic" class="${s.fontStyle==='italic'?'on':''}" title="Italic"><i>I</i></button><button data-tstyle="underline" class="${s.underline?'on':''}" title="Underline"><span style="text-decoration:underline;">U</span></button></span>`+
       `<input type="number" id="tbSize" min="4" value="${Math.round(s.fontSize||32)}"><span class="k">pt</span>`+
@@ -1937,7 +2027,7 @@ function updateToolbar(){const box=document.getElementById('toolopts');if(!box)r
   else if(t==='pencil'){html=`<span class="hintmsg">Click and drag on the canvas to draw freehand</span>`;}
   box.innerHTML=html;
   const q=id=>box.querySelector('#'+id);
-  if(q('tbFont'))q('tbFont').onchange=e=>applyText('fontFamily',e.target.value,true);
+  if(document.getElementById('tbFontHost'))mountFontPicker('tbFontHost',(selText||state.style).fontFamily||FONTS[0],v=>applyText('fontFamily',v,true));
   if(q('tbWeight'))q('tbWeight').onchange=e=>applyText('fontWeight',e.target.value,true);
   if(q('tbSize')){const f=q('tbSize');f.oninput=e=>applyText('fontSize',Math.max(4,+e.target.value||4),false);f.onchange=e=>applyText('fontSize',Math.max(4,+e.target.value||4),true);}
   if(q('tbTrack')){const f=q('tbTrack');f.oninput=e=>applyText('letterSpacing',+e.target.value||0,false);f.onchange=e=>applyText('letterSpacing',+e.target.value||0,true);}
@@ -1961,7 +2051,7 @@ function updateStatus(){
 // ---------- FONT EMBEDDING FOR EXPORT/PRINT ----------
 // Google web fonts must be inlined as base64 @font-face, otherwise a rasterized
 // or standalone SVG can't load them and text falls back to a generic face.
-const WEBFONT_WEIGHTS={'Roboto':[400,700],'Open Sans':[400,700],'Lato':[400,700],'Montserrat':[400,700],'Poppins':[400,700],'Raleway':[400,700],'Nunito':[400,700],'Inter':[400,700],'Oswald':[400,700],'Merriweather':[400,700],'Playfair Display':[400,700],'Roboto Mono':[400,700],'Bebas Neue':[400],'Anton':[400],'Pacifico':[400],'Lobster':[400],'Dancing Script':[400,700]};
+const WEBFONT_WEIGHTS={'Roboto':[400,700],'Open Sans':[400,700],'Lato':[400,700],'Montserrat':[400,700],'Poppins':[400,700],'Raleway':[400,700],'Nunito':[400,700],'Inter':[400,700],'Oswald':[400,700],'Merriweather':[400,700],'Playfair Display':[400,700],'Roboto Mono':[400,700],'Bebas Neue':[400],'Anton':[400],'Pacifico':[400],'Lobster':[400],'Dancing Script':[400,700],'Work Sans':[400,700],'Rubik':[400,700],'DM Sans':[400,700],'Manrope':[400,700],'Barlow':[400,700],'Josefin Sans':[400,700],'Quicksand':[400,700],'Lora':[400,700],'PT Serif':[400,700],'Bitter':[400,700],'EB Garamond':[400,700],'Libre Baskerville':[400,700],'Abril Fatface':[400],'Righteous':[400],'Fjalla One':[400],'Archivo Black':[400],'Comfortaa':[400,700],'Teko':[400,700],'Caveat':[400,700],'Satisfy':[400],'Great Vibes':[400],'Permanent Marker':[400],'Source Code Pro':[400,700],'Space Mono':[400,700],'JetBrains Mono':[400,700]};
 const fontEmbedCache={};
 let _exportFontStyle='';
 function abToB64(buf){let bin='';const bytes=new Uint8Array(buf),chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));return btoa(bin);}
