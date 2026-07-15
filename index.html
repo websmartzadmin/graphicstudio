@@ -120,7 +120,8 @@
   .insptab svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
   .insptab:hover{color:var(--text);}
   .insptab.on{color:var(--accent);background:var(--panel);box-shadow:inset 0 -2px 0 var(--accent);}
-  .inspbody{flex:1;overflow-y:auto;overflow-x:hidden;min-height:60px;}
+  /* reserve the scrollbar gutter always, so panel rows line up across tabs whether or not a tab scrolls */
+  .inspbody{flex:1;overflow-y:auto;overflow-x:hidden;min-height:60px;scrollbar-gutter:stable;}
   #layersWrap{flex:0 0 auto;border-top:1px solid var(--line);max-height:40%;display:flex;flex-direction:column;overflow:hidden;}
   #layersWrap .panel-body{overflow-y:auto;padding-top:0;}
   #layersWrap .panel-head{cursor:default;}
@@ -179,6 +180,9 @@
   .row .ctl .stepper:has(#apW){flex:0 0 60px;}
   .fxhead{padding:7px 12px 2px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--line2);margin-top:5px;}
   .fxsub label{padding-left:12px;font-size:10px;opacity:.85;}
+  .paintrow .fxval{min-width:26px;}
+  .paintrow .ctl{gap:5px;}
+  .paintrow label{width:46px;}
   .fxcolor{width:26px;height:20px;padding:0;border:1px solid var(--line2);border-radius:5px;background:none;cursor:pointer;flex:0 0 auto;}
   .fxval{font-size:10px;color:var(--muted);min-width:30px;text-align:right;flex:0 0 auto;}
   .attrstack{border-top:1px solid var(--line2);margin-top:3px;}
@@ -188,6 +192,10 @@
   .attrchk{width:15px;height:15px;flex:0 0 auto;accent-color:var(--accent);cursor:pointer;margin:0;}
   .attricon{width:18px;height:18px;flex:0 0 auto;color:var(--muted);display:flex;align-items:center;justify-content:center;}
   .attr:not(.off) .attricon{color:var(--text);}
+  /* Effect rows read as an LED: same bulb greyed out when off, lit green when active */
+  .attr.fx .attricon{color:var(--muted);}
+  .attr.fx:not(.off) .attricon{color:#22c55e;}
+  .attr.fx:not(.off) .attricon svg{filter:drop-shadow(0 0 3px #22c55ecc) drop-shadow(0 0 6px #22c55e66);}
   .attricon svg{width:18px;height:18px;}
   .attrname{flex:1;font-size:12px;cursor:pointer;user-select:none;}
   .attr.exp .attrname{color:var(--accent);font-weight:600;}
@@ -240,15 +248,39 @@
   .fpick-item.sel{background:var(--accent);color:#fff;}
   .fpick-empty{padding:10px;color:var(--muted);font-size:12px;}
   /* Gradient angle dial */
-  #fgAngle{width:52px;flex:0 0 auto;}
-  .graddial{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;cursor:grab;flex:0 0 auto;margin-left:6px;touch-action:none;-webkit-user-select:none;user-select:none;}
+  #fgAngle{width:46px;flex:0 0 auto;}
+  .row .ctl .stepper:has(#fgAngle){flex:0 0 auto;}
+  .graddial{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;cursor:grab;flex:0 0 auto;margin-left:auto;touch-action:none;-webkit-user-select:none;user-select:none;}
+  .fgflip{flex:0 0 auto;}
+  .fgsavelib{background:var(--panel2);border:1px solid var(--line2);color:var(--text);border-radius:7px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:600;flex:0 0 auto;}
+  .row .ctl input[type=range][data-paint],.row .ctl input[type=range].geOpacity{flex:1 1 0;width:auto;min-width:0;}
+  .fgsavelib:hover{background:var(--hover);border-color:var(--accent);color:#fff;}
+  #fgStopSw{width:26px;height:26px;flex:0 0 auto;}
+  #fgStopHex{flex:1 1 auto;min-width:60px;}
+  .row .ctl .stepper:has(#fgStopPos){flex:0 0 50px;}
+  #fgStopDel{flex:0 0 auto;padding:0;}
+  .row.stoprow label{width:34px;}
+  /* Library gradient editor (matches Style panel) */
+  .libnote{padding:10px 12px;color:var(--muted);font-size:11px;line-height:1.5;border-top:1px solid var(--line);margin-top:8px;}
+  .gradEditor .row{padding-top:3px;padding-bottom:3px;}
+  .gradEditor .gradHint{padding-left:12px;padding-right:12px;margin-bottom:6px;}
+  .geAngle{width:46px!important;flex:0 0 auto;}
+  /* must out-rank the later .gstopsw base rule, or the swatch renders 34x22 instead of square */
+  .gradEditor .geSw{width:26px;height:26px;flex:0 0 auto;}
+  .geHex{flex:1 1 auto;min-width:60px;}
+  .geDial{margin-left:auto;}
+  .geDel{flex:0 0 auto;background:var(--panel);border:1px solid var(--line2);color:var(--muted);border-radius:4px;width:22px;height:24px;padding:0;cursor:pointer;}
+  .geDel:disabled{opacity:.35;cursor:default;}
+  .row .ctl .stepper:has(.gePos){flex:0 0 50px;}
+  .row .ctl .stepper:has(.geAngle){flex:0 0 auto;}
+  .gradEdActions .geDelG{color:var(--danger);}
   .graddial:active{cursor:grabbing;}
   .libtargetrow{display:flex;align-items:center;gap:8px;padding:8px 12px 2px;}
   .libtargetlbl{font-size:11px;color:var(--muted);}
   .seg.libtarget{flex:1;}
   .seg.libtarget button{font-size:11px;padding:5px 0;}
-  #fgStopPos{width:50px;flex:0 0 auto;}
-  #fgStopDel{flex:0 0 auto;background:var(--panel);border:1px solid var(--line2);color:var(--muted);border-radius:4px;width:26px;height:24px;cursor:pointer;}
+  #fgStopPos{width:36px;flex:0 0 auto;}
+  #fgStopDel{flex:0 0 auto;background:var(--panel);border:1px solid var(--line2);color:var(--muted);border-radius:4px;width:22px;height:24px;cursor:pointer;}
   #fgStopDel:disabled{opacity:.35;cursor:default;}
   .attrsw.blursw{background:radial-gradient(circle at 50% 50%,var(--muted),transparent 70%);opacity:.5;cursor:default;}
   .attrhandle{flex:0 0 auto;color:var(--muted);font-size:13px;cursor:grab;letter-spacing:-2px;padding-left:2px;}
@@ -304,8 +336,8 @@
   .styles-grid .st:hover{outline:2px solid var(--accent);outline-offset:1px;}
   .styles-grid .st.stadd{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;background:var(--panel2);border-style:dashed;}
   .styles-grid .st.editing{outline:2px solid var(--accent);outline-offset:1px;}
-  .gradEditor{margin:8px 12px;padding:10px;border:1px solid var(--accent);border-radius:8px;background:var(--panel2);}
-  .gradEdTitle{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:8px;font-weight:600;}
+  .gradEditor{margin:0;padding:4px 0 10px;border:0;border-bottom:1px solid var(--line2);border-radius:0;background:#00000018;}
+  .gradEdTitle{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:2px 0 6px;padding:0 12px;font-weight:600;}
   .gradRamp{height:24px;border-radius:5px;border:1px solid var(--line2);cursor:copy;box-shadow:inset 0 0 0 1px #0003;}
   .gradStops{position:relative;height:16px;margin:5px 0 2px;cursor:copy;}
   .gstop{position:absolute;top:2px;width:11px;height:11px;border-radius:3px;background:var(--c);border:1.5px solid #fff;box-shadow:0 0 0 1px #000,0 1px 2px #0008;transform:translateX(-50%);cursor:grab;}
@@ -323,7 +355,7 @@
   .gstophex{flex:1;min-width:0;text-transform:uppercase;}
   .gstopdel{flex:0 0 auto;background:var(--panel);border:1px solid var(--line2);color:var(--muted);border-radius:4px;padding:0 8px;height:24px;cursor:pointer;font-size:11px;}
   .gstopdel:disabled{opacity:.35;cursor:default;}
-  .gradEdActions{display:flex;gap:5px;margin-top:8px;}
+  .gradEdActions{display:flex;gap:5px;margin:14px 12px 4px;}
   .gradEdActions button{flex:1;background:var(--panel);border:1px solid var(--line2);color:var(--text);border-radius:5px;padding:5px 2px;font-size:10px;cursor:pointer;}
   .gradEdActions .gApply{background:var(--accent);color:#fff;border-color:var(--accent);}
   .gradEdActions button:hover{filter:brightness(1.15);}
@@ -358,6 +390,18 @@
   .layer .eye:hover{background:var(--hover);}
   .layer.hidden .name{opacity:.4;}
   .layer .swatch{width:16px;height:16px;border-radius:3px;border:1px solid var(--line2);flex:0 0 auto;}
+  .lyr-count{font-size:10px;color:var(--muted);flex:0 0 auto;min-width:14px;text-align:center;}
+  .lyr.drop>.lyr-head{background:var(--active);box-shadow:inset 0 0 0 2px var(--accent);}
+  .grow{display:flex;align-items:center;gap:5px;padding:5px 8px 5px 4px;cursor:pointer;border-left:2px solid transparent;user-select:none;}
+  .grow:hover{background:var(--panel2);}
+  .grow.sel{background:var(--active);border-left-color:var(--accent);}
+  .grp-tri{width:18px;}
+  .grow-ic{width:16px;height:16px;color:var(--muted);flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .grow-name{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+  .grow .eye{margin-left:auto;}
+  .grp-objs{padding-left:14px;}
+  .layer{user-select:none;}
+  .layer.nested{padding-left:6px;}
   .layer .name{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .layer .name[contenteditable]{outline:1px solid var(--accent);border-radius:3px;padding:0 2px;-webkit-user-select:text;user-select:text;}
 
@@ -391,7 +435,7 @@
   .dt-add:hover{background:var(--hover);color:var(--text);}
 
   /* Color picker popover */
-  .colorpop{position:fixed;z-index:400;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;width:260px;box-sizing:border-box;box-shadow:0 14px 44px #000b;display:none;}
+  .colorpop{position:fixed;z-index:400;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;width:260px;box-sizing:border-box;box-shadow:0 14px 44px #000b;display:none;max-height:94vh;overflow-y:auto;overflow-x:hidden;}
   .cp-sv{position:relative;width:100%;height:150px;border-radius:8px;overflow:hidden;cursor:crosshair;touch-action:none;}
   .cp-sv-hue,.cp-sv-white,.cp-sv-black{position:absolute;inset:0;}
   .cp-sv-white{background:linear-gradient(to right,#fff,rgba(255,255,255,0));}
@@ -418,7 +462,19 @@
   .cp-modes button.on{background:var(--accent);color:#fff;}
   .cp-modes .cp-eyedrop{flex:0 0 38px;width:38px;height:auto;padding:0;border:none;border-left:1px solid var(--line2);border-radius:0;background:var(--panel2);color:var(--muted);}
   .cp-modes .cp-eyedrop:hover{color:#fff;background:var(--accent);border-color:var(--accent);}
-  .cp-grad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;}
+  .cp-grad{display:block;width:100%;}
+  .cpg-ed{margin-bottom:2px;}
+  .cpg-sep{border-top:1px solid var(--line2);margin:16px 0 4px;}
+  .cp-grad .row{padding:5px 0;}
+  .cp-grad .row label{width:42px;}
+  .cp-grad .row .ctl>select{flex:1;min-width:0;}
+  .cpgAngle{width:46px!important;flex:0 0 auto;}
+  .row .ctl .stepper:has(.cpgAngle){flex:0 0 auto;}
+  .cp-grad .graddial{margin-left:auto;}
+  .cpg-bar{margin:10px 0 2px;}
+  .cpg-savedlabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 6px;}
+  .cpg-savedgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .cpg-savedgrid .cpg{height:26px;}
   .cp-swatch{width:100%;max-height:300px;overflow-y:auto;overflow-x:hidden;}
   .cp-swlabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px;}
   .cp-swlabel:first-child{margin-top:2px;}
@@ -508,7 +564,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 134</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 174</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -687,7 +743,7 @@ function makeTab(st,dirty){return{id:tabId(),state:st,history:[],future:[],commi
 function bumpIds(st){let mu=0,ml=0;(st.shapes||[]).forEach(sh=>{const n=+String(sh.id).replace(/^s/,'');if(n>mu)mu=n;});(st.layers||[]).forEach(l=>{const n=+String(l.id).replace(/^L/,'');if(n>ml)ml=n;});if(mu>=uidc)uidc=mu+1;if(ml>=lidc)lidc=ml+1;}
 let uidc=1;const uid=()=>'s'+(uidc++);
 let lidc=1;const luid=()=>'L'+(lidc++);
-let collapsedLayers=new Set();
+let expandedNodes=new Set();let _dragItem=null;
 let sizeLocked=localStorage.getItem('gs-lock')==='1';
 let docUnit=localStorage.getItem('gs-unit')||'px';
 let libTarget='fill';
@@ -699,6 +755,10 @@ let customSwatches=[];try{customSwatches=JSON.parse(localStorage.getItem('gs-swa
 function saveSwatches(){localStorage.setItem('gs-swatches',JSON.stringify(customSwatches));}
 let customGradients=[];try{customGradients=JSON.parse(localStorage.getItem('gs-gradients')||'[]');}catch(_){}
 function saveGradients(){localStorage.setItem('gs-gradients',JSON.stringify(customGradients));}
+function seedLibraryDefaults(){if(localStorage.getItem('gs-lib-seeded'))return;
+  for(const c of SOLIDS)if(!customSwatches.includes(c))customSwatches.push(c);
+  customGradients=customGradients.concat(GRADIENTS.map(g=>({id:'cg'+(uidc++),type:g.type||'linear',angle:g.angle||0,stops:g.stops.map(s=>s.slice())})));
+  saveSwatches();saveGradients();localStorage.setItem('gs-lib-seeded','1');}
 function allGradients(){return[...GRADIENTS,...customGradients];}
 let gradEditId=null,gradSelStop=0;
 
@@ -713,8 +773,22 @@ function buildStage(){
   vp=el('g',{id:'vp'});gBoard=el('g',{});gContent=el('g',{});gOverlay=el('g',{});
   vp.append(gBoard,gContent,gOverlay);stage.append(gDefs,vp);
 }
-function gradCss(id){const g=allGradients().find(x=>x.id===id);if(!g)return'#000';const a=g.angle==null?180:(180-g.angle);const st=[...g.stops].sort((p,q)=>p[1]-q[1]);return`linear-gradient(${a}deg,${st.map(s=>s[0]+' '+(s[1]*100)+'%').join(',')})`;}
+function gradCss(id){const g=allGradients().find(x=>x.id===id);if(!g)return'#000';const st=[...g.stops].sort((p,q)=>p[1]-q[1]).map(s=>s[0]+' '+(s[1]*100)+'%').join(',');if(g.type==='radial')return`radial-gradient(circle at 50% 50%,${st})`;const a=g.angle==null?180:(180-g.angle);return`linear-gradient(${a}deg,${st})`;}
 function fillCss(c){if(!c||c==='none')return'transparent';if(typeof c==='string'&&c.startsWith('url(')){const id=c.slice(5,-1);return gradCss(id);}return c;}
+// Library thumbnail for a gradient, with its saved opacity baked in (gradCss stays opacity-free:
+// shapes referencing a gradient apply their own fillOpacity, so baking it there would double-count)
+function gradThumbCss(id){const g=allGradients().find(x=>x.id===id);if(!g)return'#000';
+  const a=g.opacity==null?1:g.opacity;if(a>=1)return gradCss(id);
+  const st=[...g.stops].sort((p,q)=>p[1]-q[1]).map(s=>{const c=hexToRgb(s[0]);return 'rgba('+Math.round(c.r)+','+Math.round(c.g)+','+Math.round(c.b)+','+a+') '+(s[1]*100)+'%';}).join(',');
+  if(g.type==='radial')return 'radial-gradient(circle at 50% 50%,'+st+')';
+  const ang=g.angle==null?180:(180-g.angle);return 'linear-gradient('+ang+'deg,'+st+')';}
+// Paint a swatch over a checkerboard so saved opacity is actually visible
+const SW_CHK='linear-gradient(45deg,#9a9a9a 25%,transparent 25%),linear-gradient(-45deg,#9a9a9a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#9a9a9a 75%),linear-gradient(-45deg,transparent 75%,#9a9a9a 75%)';
+function swatchBg(el,css){const isGrad=/gradient\(/.test(css);
+  el.style.backgroundColor='#fff';
+  el.style.backgroundImage=(isGrad?css:'linear-gradient('+css+','+css+')')+','+SW_CHK;
+  el.style.backgroundSize='auto,8px 8px,8px 8px,8px 8px,8px 8px';
+  el.style.backgroundPosition='0 0,0 0,0 4px,4px -4px,-4px 0';}
 function gradToCss(g){const st=[...(g.stops||[])].sort((a,b)=>a[1]-b[1]).map(s=>s[0]+' '+Math.round(s[1]*100)+'%').join(',');
   if(g.type==='radial')return 'radial-gradient(circle at 50% 50%,'+st+')';const a=g.angle==null?180:(180-g.angle);return 'linear-gradient('+a+'deg,'+st+')';}
 function fillIsGrad(s){return!!(typeof s.fill==='string'&&s.fill.indexOf('url(#fillg_')===0&&s.fillGrad);}
@@ -730,7 +804,7 @@ function rad(d){return d*Math.PI/180;}
 function shapeBBox(s){
   switch(s.type){
     case 'rect':case 'ellipse':case 'polygon':case 'star':case 'image':return{x:s.x,y:s.y,w:s.w,h:s.h};
-    case 'text':{let x=s.x;if(!(s.boxWidth>0)){const w=s.w||1;if(s.align==='middle')x=s.x-w/2;else if(s.align==='end')x=s.x-w;}return{x,y:s.y,w:s.boxWidth>0?s.boxWidth:(s.w||1),h:s.h};}
+    case 'text':{const _sx=s.sx||1,_sy=s.sy||1,w=(s.boxWidth>0?s.boxWidth:(s.w||1))*_sx,h=(s.h||1)*_sy;let x=s.x;if(!(s.boxWidth>0)){if(s.align==='middle')x=s.x-w/2;else if(s.align==='end')x=s.x-w;}return{x,y:s.y,w,h};}
     case 'line':{const x=Math.min(s.x1,s.x2),y=Math.min(s.y1,s.y2);return{x,y,w:Math.abs(s.x2-s.x1)||.001,h:Math.abs(s.y2-s.y1)||.001};}
     case 'path':case 'freehand':{let xs=[],ys=[];if(s.subpaths){for(const sp of s.subpaths)for(const p of sp){xs.push(p.x);ys.push(p.y);}}else for(const n of s.nodes){xs.push(n.x);ys.push(n.y);if(n.hIn){xs.push(n.hIn.x);ys.push(n.hIn.y);}if(n.hOut){xs.push(n.hOut.x);ys.push(n.hOut.y);}}const x=Math.min(...xs),y=Math.min(...ys);return{x,y,w:(Math.max(...xs)-x)||.001,h:(Math.max(...ys)-y)||.001};}
   }
@@ -747,8 +821,8 @@ function setShapeBBox(s,nb){
   switch(s.type){
     case 'rect':case 'ellipse':case 'polygon':case 'star':s.x=nb.x;s.y=nb.y;s.w=nb.w;s.h=nb.h;break;
     case 'image':{if(s.imgX!=null){const ix1=mx(s.imgX),iy1=my(s.imgY),ix2=mx(s.imgX+s.imgW),iy2=my(s.imgY+s.imgH);s.imgX=ix1;s.imgY=iy1;s.imgW=ix2-ix1;s.imgH=iy2-iy1;}s.x=nb.x;s.y=nb.y;s.w=nb.w;s.h=nb.h;}break;
-    case 'text':{const sc=(nb.w>0&&ob.w>0)?nb.w/ob.w:sy;s.y=nb.y;s.w=Math.max(4,ob.w*sc);s.h=Math.max(4,ob.h*sc);s.fontSize=Math.max(4,s.fontSize*sc);if(s.boxWidth>0)s.boxWidth=Math.max(20,s.boxWidth*sc);
-      let ax=nb.x;if(!(s.boxWidth>0)){if(s.align==='middle')ax=nb.x+s.w/2;else if(s.align==='end')ax=nb.x+s.w;}s.x=ax;}break;
+    case 'text':{s.sx=Math.max(.02,(s.sx||1)*sx);s.sy=Math.max(.02,(s.sy||1)*sy);s.y=nb.y;
+      let ax=nb.x;if(!(s.boxWidth>0)){if(s.align==='middle')ax=nb.x+nb.w/2;else if(s.align==='end')ax=nb.x+nb.w;}s.x=ax;}break;
     case 'line':{const x1=mx(s.x1),y1=my(s.y1),x2=mx(s.x2),y2=my(s.y2);s.x1=x1;s.y1=y1;s.x2=x2;s.y2=y2;}break;
     case 'path':case 'freehand':if(s.subpaths){for(const sp of s.subpaths)for(const p of sp){p.x=mx(p.x);p.y=my(p.y);}}else for(const n of s.nodes){const nx=mx(n.x),ny=my(n.y);if(n.hIn){n.hIn.x=mx(n.hIn.x);n.hIn.y=my(n.hIn.y);}if(n.hOut){n.hOut.x=mx(n.hOut.x);n.hOut.y=my(n.hOut.y);}n.x=nx;n.y=ny;}break;
   }
@@ -809,7 +883,13 @@ function buildTextEl(s){const align=s.align||'start',anchor=align==='justify'?'s
   if(s.fontStyle&&s.fontStyle!=='normal')e.setAttribute('font-style',s.fontStyle);
   if(s.underline)e.setAttribute('text-decoration','underline');
   const lh=s.lineHeight||1.2;const lines=s.boxWidth>0?wrapText(s):(s.text||'').split('\n');lines.forEach((ln,i)=>{const t=el('tspan',{x:ax,dy:i===0?0:s.fontSize*lh});t.textContent=ln||' ';e.append(t);});
-  const tr=transformStr(s);if(tr)e.setAttribute('transform',tr);if(s.blend&&s.blend!=='normal')e.style.mixBlendMode=s.blend;return e;}
+  const _sx=s.sx||1,_sy=s.sy||1;
+  if(_sx!==1||_sy!==1){const bb=shapeBBox(s),cx2=bb.x+bb.w/2,cy2=bb.y+bb.h/2;let M=new DOMMatrix();
+    if(s.rot||s.shear||s.shearY){M=M.translate(cx2,cy2);if(s.rot)M=M.rotate(s.rot);if(s.shear)M=M.skewX(s.shear);if(s.shearY)M=M.skewY(s.shearY);M=M.translate(-cx2,-cy2);}
+    M=M.translate(ax,s.y).scale(_sx,_sy).translate(-ax,-s.y);
+    e.setAttribute('transform',`matrix(${M.a} ${M.b} ${M.c} ${M.d} ${M.e} ${M.f})`);
+  }else{const tr=transformStr(s);if(tr)e.setAttribute('transform',tr);}
+  if(s.blend&&s.blend!=='normal')e.style.mixBlendMode=s.blend;return e;}
 const FX_META={
   shadow:{label:'Drop Shadow',place:'behind',color:'#000000'},
   innerShadow:{label:'Inner Shadow',place:'front',color:'#000000'},
@@ -894,7 +974,7 @@ function drawRulers(){const rt=document.getElementById('rulerTop'),rl=document.g
   const cl=setup(rl),lw=rl.clientWidth,lh=rl.clientHeight;
   for(let v=Math.floor((-state.panY/state.zoom)/minU)*minU;;v+=minU){const py=state.panY+v*state.zoom;if(py>lh+1)break;if(py<-1)continue;const maj=Math.abs(v%stepU)<1e-6;cl.beginPath();cl.moveTo(maj?lw-9:lw-4,py+.5);cl.lineTo(lw,py+.5);cl.stroke();if(maj){cl.save();cl.translate(8,py-2);cl.rotate(-Math.PI/2);cl.fillText(String(Math.round(v*sc)),0,0);cl.restore();}}}
 window.addEventListener('resize',()=>drawRulers());
-function resetDefs(){gDefs.innerHTML='';for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));gDefs.append(lg);}
+function resetDefs(){gDefs.innerHTML='';for(const g of allGradients())appendShapeGrad(gDefs,g.id,g);
   for(const s of state.shapes)if(fillIsGrad(s))appendShapeGrad(gDefs,'fillg_'+s.id,s.fillGrad);
   if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(#docbg')===0&&state.doc.bgGrad)appendShapeGrad(gDefs,'docbg',state.doc.bgGrad);}
 function render(){
@@ -956,7 +1036,7 @@ function targetId(t){while(t&&t!==gContent&&!(t.dataset&&t.dataset.id))t=t.paren
 // ---- Layers ----
 function layerOf(s){return state.layers.find(l=>l.id===s.layerId);}
 function shapeVisible(s){if(s.visible===false)return false;const L=layerOf(s);return !L||L.visible!==false;}
-function shapeInteractive(s){if(s.visible===false||s.locked)return false;const L=layerOf(s);return !L||(L.visible!==false&&!L.locked);}
+function shapeInteractive(s){if(s.visible===false||s.locked)return false;const L=layerOf(s);if(L&&(L.visible===false||L.locked))return false;return !state.activeLayer||s.layerId===state.activeLayer;}
 function renderOrder(){const out=[];for(const L of state.layers)for(const s of state.shapes)if(s.layerId===L.id)out.push(s);for(const s of state.shapes)if(!state.layers.some(L=>L.id===s.layerId))out.push(s);return out;}
 function ensureLayers(){
   if(!Array.isArray(state.layers))state.layers=[];
@@ -972,7 +1052,7 @@ function ensureLayers(){
 function syncUidc(){let mx=0;for(const s of state.shapes)for(const v of [s.id,s.groupId])if(v){const n=parseInt(String(v).replace(/\D/g,''))||0;if(n>mx)mx=n;}if(uidc<=mx)uidc=mx+1;}
 function dedupeIds(){syncUidc();const seen=new Set();for(const s of state.shapes){if(!s.id||seen.has(s.id)){s.id=uid();reidGrad(s);}seen.add(s.id);}}
 function migrateFills(){for(const s of state.shapes){if(!fillIsGrad(s)&&typeof s.fill==='string'&&s.fill.startsWith('url(#')&&s.fill.indexOf('url(#fillg_')!==0){const lib=allGradients().find(x=>x.id===s.fill.slice(5,-1));if(lib){s.fillGrad={type:'linear',angle:lib.angle||0,stops:lib.stops.map(x=>x.slice())};s.fill='url(#fillg_'+s.id+')';}}}}
-function addLayer(){const L={id:luid(),name:'Layer '+(state.layers.length+1),visible:true,locked:false};const idx=state.layers.findIndex(l=>l.id===state.activeLayer);state.layers.splice(idx+1,0,L);state.activeLayer=L.id;collapsedLayers.delete(L.id);pushHistory();render();refreshPanels();}
+function addLayer(){const L={id:luid(),name:'Layer '+(state.layers.length+1),visible:true,locked:false};const idx=state.layers.findIndex(l=>l.id===state.activeLayer);state.layers.splice(idx+1,0,L);state.activeLayer=L.id;expandedNodes.add(L.id);pushHistory();render();refreshPanels();}
 function deleteLayer(){if(state.layers.length<=1)return;const idx=state.layers.findIndex(l=>l.id===state.activeLayer);if(idx<0)return;const id=state.activeLayer;const n=state.shapes.filter(s=>s.layerId===id).length;if(n&&!confirm('Delete this layer and its '+n+' object'+(n>1?'s':'')+'?'))return;state.shapes=state.shapes.filter(s=>s.layerId!==id);state.sel=state.sel.filter(sid=>state.shapes.some(s=>s.id===sid));state.layers.splice(idx,1);state.activeLayer=state.layers[Math.min(idx,state.layers.length-1)].id;pushHistory();render();refreshPanels();}
 function raiseLayer(){const i=state.layers.findIndex(l=>l.id===state.activeLayer);if(i<0||i>=state.layers.length-1)return;const[l]=state.layers.splice(i,1);state.layers.splice(i+1,0,l);pushHistory();render();refreshPanels();}
 function lowerLayer(){const i=state.layers.findIndex(l=>l.id===state.activeLayer);if(i<=0)return;const[l]=state.layers.splice(i,1);state.layers.splice(i-1,0,l);pushHistory();render();refreshPanels();}
@@ -1011,7 +1091,7 @@ function activateTab(i,skipCommit){
   if(!skipCommit)commitActiveTab();
   activeDoc=i;const t=tabs[i];
   state=t.state;history=t.history;future=t.future;committed=t.committed;
-  drag=null;penDraft=null;cropTarget=null;editing=null;collapsedLayers.clear();
+  drag=null;penDraft=null;cropTarget=null;editing=null;expandedNodes.clear();
   ensureLayers();healCrops();
   if(committed===null){committed=snapshot();t.committed=committed;}
   setToolUI();render();updateViewport();refreshPanels();updateDocName();updateUndoBtns();renderTabs();
@@ -1191,7 +1271,7 @@ function updateGroupHandle(p,e){const {box,handle,items}=drag,h=handle;
   if(hasN)nh=Math.max(2,(box.y+box.h)-p.y);
   if(hasS)nh=Math.max(2,p.y-box.y);
   let sx=(hasW||hasE)?nw/box.w:1,sy=(hasN||hasS)?nh/box.h:1;
-  const isCorner=(hasW||hasE)&&(hasN||hasS),proportional=sizeLocked?!e.shiftKey:e.shiftKey;
+  const isCorner=(hasW||hasE)&&(hasN||hasS),proportional=sizeLocked||e.shiftKey;
   if(proportional){if(isCorner){const sc=Math.abs(sx-1)>Math.abs(sy-1)?sx:sy;sx=sc;sy=sc;}else if(hasW||hasE)sy=sx;else sx=sy;}
   const ax=hasW?box.x+box.w:box.x,ay=hasN?box.y+box.h:box.y;
   for(const it of items){const b=it.b;setShapeBBox(it.s,{x:ax+(b.x-ax)*sx,y:ay+(b.y-ay)*sy,w:Math.max(2,b.w*sx),h:Math.max(2,b.h*sy)});}
@@ -1199,7 +1279,7 @@ function updateGroupHandle(p,e){const {box,handle,items}=drag,h=handle;
 function updateHandle(p,e){const s=drag.shape;
   if(drag.handle==='rot'){let ang=(Math.atan2(p.y-drag.center.y,p.x-drag.center.x)-drag.startAngle)*180/Math.PI+drag.startRot;if(e.shiftKey)ang=Math.round(ang/15)*15;s.rot=Math.round(ang*10)/10;drag.moved=true;render();updateStatus();return;}
   if(s.type==='line'){const lp=toLocal(p,s);if(drag.handle==='p1'){s.x1=lp.x;s.y1=lp.y;}else{s.x2=lp.x;s.y2=lp.y;}drag.moved=true;render();updateStatus();return;}
-  if(s.type==='text'&&(drag.handle==='e'||drag.handle==='w')){if(!(s.boxWidth>0)){const b=shapeBBox(s);s.x=b.x;}const lp=toLocal(p,s);if(drag.handle==='e'){s.boxWidth=Math.max(20,lp.x-s.x);}else{const right=s.x+(s.boxWidth>0?s.boxWidth:s.w);const nx=Math.min(lp.x,right-20);s.boxWidth=right-nx;s.x=nx;}drag.moved=true;render();updateStatus();return;}
+  if(s.type==='text'&&s.boxWidth>0&&(drag.handle==='e'||drag.handle==='w')){const lp=toLocal(p,s);if(drag.handle==='e'){s.boxWidth=Math.max(20,lp.x-s.x);}else{const right=s.x+(s.boxWidth>0?s.boxWidth:s.w);const nx=Math.min(lp.x,right-20);s.boxWidth=right-nx;s.x=nx;}drag.moved=true;render();updateStatus();return;}
   const lp=toLocal(p,s),b=shapeBBox(s),h=drag.handle;
   const hasW=h.includes('w'),hasE=h.includes('e'),hasN=h.includes('n'),hasS=h.includes('s');
   let nw=b.w,nh=b.h;
@@ -1207,8 +1287,7 @@ function updateHandle(p,e){const s=drag.shape;
   if(hasE)nw=Math.max(2,lp.x-b.x);
   if(hasN)nh=Math.max(2,(b.y+b.h)-lp.y);
   if(hasS)nh=Math.max(2,lp.y-b.y);
-  const isCorner=(hasW||hasE)&&(hasN||hasS);let proportional=sizeLocked?!e.shiftKey:e.shiftKey;
-  if(s.type==='text'&&isCorner)proportional=true;
+  const isCorner=(hasW||hasE)&&(hasN||hasS);let proportional=sizeLocked||e.shiftKey;
   if(proportional&&b.h>0&&b.w>0){const r=b.w/b.h;if(isCorner){if(nw/nh>r)nw=nh*r;else nh=nw/r;}else if(hasW||hasE)nh=nw/r;else nw=nh*r;}
   let nx=b.x,ny=b.y;
   if(hasW)nx=(b.x+b.w)-nw;
@@ -1297,12 +1376,17 @@ document.getElementById('swDefault').onclick=()=>{for(const o of styleTargets())
 function hexToRgb(h){h=(h||'#000000').replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16)||0;return{r:(n>>16)&255,g:(n>>8)&255,b:n&255};}
 function rgbToHex(r,g,b){return'#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');}
 function toHex(c){if(!c||c==='none'||(typeof c==='string'&&c.startsWith('url(')))return'#000000';if(c[0]==='#'){if(c.length===4)return'#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];return c.slice(0,7);}const m=(''+c).match(/\d+/g);return m?rgbToHex(+m[0],+m[1],+m[2]):'#000000';}
+// Library swatches carry their opacity as an optional #RRGGBBAA suffix (plain #RRGGBB = fully opaque)
+function swHex(c){return (typeof c==='string'&&c[0]==='#')?c.slice(0,7):toHex(c);}
+function swAlpha(c){if(typeof c==='string'&&c[0]==='#'&&c.length===9){const a=parseInt(c.slice(7,9),16);return isNaN(a)?1:a/255;}return 1;}
+function withAlpha(hex,a){return (a==null||a>=1)?hex:hex+Math.round(clamp01(a)*255).toString(16).padStart(2,'0');}
 function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;if(d){if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360;}return{h,s:mx?d/mx:0,v:mx};}
 function hsvToRgb(h,s,v){const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;let r=0,g=0,b=0;if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}return{r:(r+m)*255,g:(g+m)*255,b:(b+m)*255};}
 function clamp01(x){return Math.max(0,Math.min(1,x));}
 let cp=null,cpState=null,cpInput=null,cpCommit=null,cpTarget='fill',cpMode='color';
+let cpGrad=null,cpGradStop=0,cpAnchor=null;
 function ensureCP(){if(cp)return;cp=document.createElement('div');cp.className='colorpop';cp.innerHTML=`
-  <div class="cp-modes"><button data-cpm="color">Color</button><button data-cpm="gradient">Gradient</button><button data-cpm="swatch">Swatches</button><button class="cp-eyedrop" id="cpEyedrop" title="Eyedropper — pick a color from anywhere on screen"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 014 4l-8.5 8.5-4.5 1 1-4.5z"/><path d="M13.5 6.5l4 4"/></svg></button></div>
+  <div class="cp-modes"><button data-cpm="color">Color</button><button data-cpm="gradient">Gradient</button><button data-cpm="swatch">Custom</button><button class="cp-eyedrop" id="cpEyedrop" title="Eyedropper — pick a color from anywhere on screen"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 014 4l-8.5 8.5-4.5 1 1-4.5z"/><path d="M13.5 6.5l4 4"/></svg></button></div>
   <div class="cp-color">
     <div class="cp-sv"><div class="cp-sv-hue"></div><div class="cp-sv-white"></div><div class="cp-sv-black"></div><div class="cp-cursor" data-c="sv"></div></div>
     <div class="cp-slider cp-hue"><div class="cp-knob" data-c="hue"></div></div>
@@ -1327,50 +1411,127 @@ function ensureCP(){if(cp)return;cp=document.createElement('div');cp.className='
   wrapSteppers(cp);
 }
 function dragArea(elm,cb){elm.addEventListener('pointerdown',e=>{e.preventDefault();elm.setPointerCapture(e.pointerId);const move=ev=>{const r=elm.getBoundingClientRect();cb(ev.clientX-r.left,ev.clientY-r.top,r.width,r.height);};move(e);const up=()=>{elm.removeEventListener('pointermove',move);elm.removeEventListener('pointerup',up);};elm.addEventListener('pointermove',move);elm.addEventListener('pointerup',up);});}
-function cpApply(){const{h,s,v,a}=cpState,rgb=hsvToRgb(h,s,v),hex=rgbToHex(rgb.r,rgb.g,rgb.b),q=x=>cp.querySelector(x);
+function cpApply(silent){const{h,s,v,a}=cpState,rgb=hsvToRgb(h,s,v),hex=rgbToHex(rgb.r,rgb.g,rgb.b),q=x=>cp.querySelector(x);
   q('.cp-sv-hue').style.background='hsl('+h+',100%,50%)';
   q('[data-c="sv"]').style.left=(s*100)+'%';q('[data-c="sv"]').style.top=((1-v)*100)+'%';
   q('[data-c="hue"]').style.left=(h/360*100)+'%';q('[data-c="alpha"]').style.left=(a*100)+'%';
   q('.cp-alpha-fill').style.background='linear-gradient(to right,rgba('+Math.round(rgb.r)+','+Math.round(rgb.g)+','+Math.round(rgb.b)+',0),rgb('+Math.round(rgb.r)+','+Math.round(rgb.g)+','+Math.round(rgb.b)+'))';
   q('.cp-prev').style.background=hex;q('#cpHex').value=hex;q('#cpR').value=Math.round(rgb.r);q('#cpG').value=Math.round(rgb.g);q('#cpB').value=Math.round(rgb.b);q('#cpA').value=Math.round(a*100);
-  if(cpInput)cpInput(hex,a);}
-function openColorPicker(anchor,hex,alpha,onInput,onCommit){ensureCP();const c=hexToRgb(hex),v=rgbToHsv(c.r,c.g,c.b);cpState={h:v.h,s:v.s,v:v.v,a:alpha==null?1:alpha};cpInput=onInput;cpCommit=onCommit;cp.style.display='block';
+  if(silent)return;
+  if(cpMode==='gradient'&&cpGrad&&cpGrad.stops[cpGradStop]){cpGrad.stops[cpGradStop][0]=hex;drawCPBar();cpGradSync(false);}
+  else if(cpInput)cpInput(hex,a);}
+function openColorPicker(anchor,hex,alpha,onInput,onCommit){ensureCP();cpAnchor=anchor&&anchor.getBoundingClientRect?anchor.getBoundingClientRect():null;cpGrad=null;const c=hexToRgb(hex),v=rgbToHsv(c.r,c.g,c.b);cpState={h:v.h,s:v.s,v:v.v,a:alpha==null?1:alpha};cpInput=onInput;cpCommit=onCommit;cp.style.display='block';
   const mt=cp.querySelector('.cp-modes');if(mt)mt.style.display='';setCPMode('color');
-  const r=anchor.getBoundingClientRect();let left=r.left-220;if(left<8)left=r.right+8;let top=r.top;const ph=340;if(top+ph>innerHeight)top=innerHeight-ph-8;if(top<8)top=8;cp.style.left=left+'px';cp.style.top=top+'px';cpApply();}
+  cpReposition();cpApply();}
 function closeCP(){if(cp&&cp.style.display==='block'){cp.style.display='none';const cb=cpCommit;cpInput=null;cpCommit=null;if(cb)cb();}}
-document.addEventListener('pointerdown',e=>{if(cp&&cp.style.display==='block'&&!cp.contains(e.target)&&!e.target.closest('#swFill,#swStroke,[data-attrsw]'))closeCP();},true);
+document.addEventListener('pointerdown',e=>{if(cp&&cp.style.display==='block'&&!cp.contains(e.target)&&!e.target.closest('.ctxmenu')&&!e.target.closest('#swFill,#swStroke,[data-attrsw]'))closeCP();},true);
 function setCPMode(mode){cpMode=mode;if(!cp)return;cp.querySelectorAll('[data-cpm]').forEach(b=>b.classList.toggle('on',b.dataset.cpm===mode));
-  cp.querySelector('.cp-color').style.display=mode==='color'?'':'none';
+  cp.querySelector('.cp-color').style.display=(mode==='color'||mode==='gradient')?'':'none';
+  const al=cp.querySelector('.cp-alpha');if(al)al.style.display=mode==='gradient'?'none':'';
   const gd=cp.querySelector('.cp-grad');if(gd){gd.style.display=mode==='gradient'?'':'none';if(mode==='gradient')renderCPGradients();}
-  const sw=cp.querySelector('.cp-swatch');if(sw){sw.style.display=mode==='swatch'?'':'none';if(mode==='swatch')renderCPSwatches();}}
+  const sw=cp.querySelector('.cp-swatch');if(sw){sw.style.display=mode==='swatch'?'':'none';if(mode==='swatch')renderCPSwatches();}
+  cpReposition();}
+function cpReposition(){if(!cp||!cpAnchor||cp.style.display!=='block')return;const r=cpAnchor,pw=cp.offsetWidth||260,ph=cp.offsetHeight||360;
+  let left=r.left-pw-8;if(left<8)left=r.right+8;if(left+pw>innerWidth-8)left=innerWidth-pw-8;if(left<8)left=8;
+  let top=r.top;if(top+ph>innerHeight-8)top=innerHeight-ph-8;if(top<8)top=8;
+  cp.style.left=left+'px';cp.style.top=top+'px';}
 function renderCPSwatches(){const box=cp.querySelector('.cp-swatch');if(!box)return;box.innerHTML='';
   const rgb=hsvToRgb(cpState.h,cpState.s,cpState.v),curHex=rgbToHex(rgb.r,rgb.g,rgb.b).toLowerCase();
-  const pick=c=>{const h=toHex(c),k=hexToRgb(h),v=rgbToHsv(k.r,k.g,k.b);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpApply();renderCPSwatches();};
+  const pick=c=>{const h=swHex(c),k=hexToRgb(h),v=rgbToHsv(k.r,k.g,k.b);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpState.a=swAlpha(c);cpApply();renderCPSwatches();};
   const section=title=>{const l=document.createElement('div');l.className='cp-swlabel';l.textContent=title;box.append(l);const g=document.createElement('div');g.className='cp-swgrid';box.append(g);return g;};
-  const g1=section('Solid Colors');
-  for(const c of SOLIDS){const d=document.createElement('div');d.className='cpg'+(toHex(c).toLowerCase()===curHex?' sel':'');d.style.background=c;d.title=c;d.onclick=()=>pick(c);g1.append(d);}
-  const g2=section('My Swatches');
-  customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='cpg'+(toHex(c).toLowerCase()===curHex?' sel':'');d.style.background=fillCss(c);d.title=c+' — right-click to delete';d.onclick=()=>pick(c);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();renderCPSwatches();}}]);g2.append(d);});
-  const add=document.createElement('div');add.className='cpg cpgadd';add.textContent='+';add.title='Save the current color as a swatch';add.onclick=()=>{const r=hsvToRgb(cpState.h,cpState.s,cpState.v),hex=rgbToHex(r.r,r.g,r.b);if(!customSwatches.includes(hex)){customSwatches.push(hex);saveSwatches();renderCPSwatches();}};g2.append(add);
-  const g3=section('Gradients');
+  const g1=section('Custom Colors');
+  customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='cpg'+(swHex(c).toLowerCase()===curHex?' sel':'');swatchBg(d,fillCss(c));d.title=c+' — right-click to delete';d.onclick=()=>pick(c);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();renderCPSwatches();}}]);g1.append(d);});
+  const add=document.createElement('div');add.className='cpg cpgadd';add.textContent='+';add.title='Save the current color as a swatch';add.onclick=()=>{const r=hsvToRgb(cpState.h,cpState.s,cpState.v),hex=withAlpha(rgbToHex(r.r,r.g,r.b),cpState.a);if(!customSwatches.includes(hex)){customSwatches.push(hex);saveSwatches();renderCPSwatches();}};g1.append(add);
+  const g2=section('Custom Gradients');
   const cur=curStyle()[cpTarget||'fill'],curId=(typeof cur==='string'&&cur.startsWith('url('))?cur.slice(5,-1):null;
-  for(const g of allGradients()){const d=document.createElement('div');d.className='cpg'+(g.id===curId?' sel':'');d.style.background=gradCss(g.id);d.title=g.id.startsWith('cg')?'Gradient — right-click to edit/delete':'Gradient';d.onclick=()=>applyPaintGradient(g.id);if(g.id.startsWith('cg'))d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>{closeCP();setTab('styles');editGradient(g.id);}},{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPSwatches();}}]);g3.append(d);}
-  const gadd=document.createElement('div');gadd.className='cpg cpgadd';gadd.textContent='+';gadd.title='Create a new gradient';gadd.onclick=()=>{closeCP();setTab('styles');newGradient();};g3.append(gadd);}
+  for(const g of customGradients){const d=document.createElement('div');d.className='cpg'+(g.id===curId?' sel':'');swatchBg(d,gradThumbCss(g.id));d.title='Apply · right-click to edit/delete';d.onclick=()=>applyPaintGradient(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>{closeCP();setTab('styles');editGradient(g.id);}},{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPSwatches();}}]);g2.append(d);}
+  const gadd=document.createElement('div');gadd.className='cpg cpgadd';gadd.textContent='+';gadd.title='Create a new gradient';gadd.onclick=()=>{closeCP();setTab('styles');newGradient();};g2.append(gadd);}
 function applyPaintGradient(id){
   if(cpTarget==='docbg'){const gg=allGradients().find(x=>x.id===id);if(gg){state.doc.bgGrad={type:gg.type||'linear',angle:gg.angle||0,stops:gg.stops.map(s=>s.slice())};state.doc.bg='url(#docbg)';render();updateDocBgSwatch();}closeCP();return;}
   const kind=cpTarget||'fill';for(const o of styleTargets()){o[kind]='url(#'+id+')';o[kind+'On']=true;}state.style[kind]='url(#'+id+')';state.style[kind+'On']=true;
   if(state.sel.length)render();updateFSSwatch();closeCP();}
+function newGradId(){let mx=0;for(const g of customGradients){const n=parseInt(String(g.id).replace(/\D/g,''))||0;if(n>mx)mx=n;}if(uidc<=mx)uidc=mx+1;return 'cg'+(uidc++);}
+// Live gradient object for the current picker target (fill or docbg)
+function cpGradObj(){const kind=cpTarget||'fill';
+  if(kind==='docbg'){if(!state.doc.bgGrad)state.doc.bgGrad={type:'linear',angle:-90,stops:[['#5aa0ff',0],['#1b52c9',1]]};if(state.doc.bg!=='url(#docbg)')state.doc.bg='url(#docbg)';return state.doc.bgGrad;}
+  const s=curStyle();
+  if(fillTypeOf(s)==='color')setFillType('linear');
+  else if(!fillIsGrad(s)&&typeof s.fill==='string'&&s.fill.startsWith('url(#')){const lib=allGradients().find(x=>x.id===s.fill.slice(5,-1));if(lib)applyLibGradToFill(lib.id);}
+  return curFillGrad();}
+function cpGradSync(commit){const kind=cpTarget||'fill';
+  if(kind==='docbg'){render();updateDocBgSwatch();if(commit)pushHistory();return;}
+  writeGradBackToLib(curStyle());   // keep the saved swatch in sync with the object's gradient
+  syncFillGrad(commit);updateFSSwatch();}
+// The object's gradient came from a library swatch -> push edits back so both views show one gradient.
+function writeGradBackToLib(o){const src=o&&o.fillGradSrc;if(!src||!o.fillGrad)return;
+  const lib=customGradients.find(x=>x.id===src);if(!lib)return;
+  lib.type=o.fillGrad.type||'linear';lib.angle=o.fillGrad.angle||0;lib.stops=o.fillGrad.stops.map(s=>s.slice());
+  saveGradients();
+  const th=document.querySelector('#stGrads [data-gid="'+src+'"]');if(th)swatchBg(th,gradThumbCss(src));}
+// Library editor changed the object's gradient -> re-point the open popup at it and redraw.
+function refreshCPGradFromSel(){if(!cp||cp.style.display!=='block'||cpMode!=='gradient')return;
+  const g=curStyle().fillGrad;if(!g)return;
+  cpGrad=g;if(cpGradStop>=cpGrad.stops.length)cpGradStop=0;
+  const t=cp.querySelector('.cpgType');if(t)t.value=cpGrad.type||'linear';
+  drawCPAngle();drawCPBar();loadCPStop();}
+function drawCPBar(){const bar=cp&&cp.querySelector('.cpg-bar');if(!bar||!cpGrad)return;
+  bar.style.background=gradToCss(cpGrad);
+  bar.innerHTML=cpGrad.stops.map((st,i)=>`<div class="gstop2${i===cpGradStop?' sel':''}" data-cgi="${i}" style="left:${st[1]*100}%;--c:${st[0]}"></div>`).join('');
+  bindCPStops();}
+function bindCPStops(){const bar=cp.querySelector('.cpg-bar');if(!bar)return;
+  bar.querySelectorAll('.gstop2').forEach(h=>{h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();cpGradStop=+h.dataset.cgi;loadCPStop();drawCPBar();
+    const r=bar.getBoundingClientRect();let moved=false,sx=e.clientX;
+    const move=ev=>{if(!moved&&Math.abs(ev.clientX-sx)<=3)return;moved=true;cpGrad.stops[cpGradStop][1]=Math.round(clamp01((ev.clientX-r.left)/r.width)*1000)/1000;drawCPBar();cpGradSync(false);};
+    const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);if(moved)cpGradSync(true);};
+    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};});
+  bar.onpointerdown=e=>{if(e.target!==bar)return;const r=bar.getBoundingClientRect(),p=clamp01((e.clientX-r.left)/r.width),ss=[...cpGrad.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}cpGrad.stops.push([col,Math.round(p*1000)/1000]);cpGradStop=cpGrad.stops.length-1;loadCPStop();drawCPBar();cpGradSync(true);};}
+function loadCPStop(){if(!cpGrad||!cpGrad.stops[cpGradStop])return;const c=hexToRgb(cpGrad.stops[cpGradStop][0]),v=rgbToHsv(c.r,c.g,c.b);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpState.a=1;cpApply(true);}
+function drawCPAngle(){if(!cp||!cpGrad)return;const rad=cpGrad.type==='radial',ang=cp.querySelector('.cpgAngle'),dial=cp.querySelector('.cpgDial');
+  if(ang){ang.value=cpGrad.angle||0;ang.disabled=rad;}
+  if(dial){dial.style.visibility=rad?'hidden':'';dial.innerHTML=fgDialSVG(cpGrad.angle||0);}}
 function renderCPGradients(){const box=cp.querySelector('.cp-grad');box.innerHTML='';
+  const kind=cpTarget||'fill';
+  if(kind==='stroke'){renderCPSavedGrads(box,true);return;}
+  cpGrad=cpGradObj();if(cpGradStop>=cpGrad.stops.length)cpGradStop=0;
+  const ed=document.createElement('div');ed.className='cpg-ed';
+  ed.innerHTML=`<div class="cpg-sep"></div>
+    <div class="row"><label>Type</label><div class="ctl"><select class="cpgType"><option value="linear">Linear Gradient</option><option value="radial">Radial Gradient</option></select></div></div>
+    <div class="row"><label>Angle</label><div class="ctl"><input type="number" class="cpgAngle" step="1"><span style="color:var(--muted)">°</span><span class="graddial cpgDial" title="Drag to set gradient angle"></span><button class="fgflip cpgFlip" title="Reverse gradient">⇄</button></div></div>
+    <div class="gbar cpg-bar"></div>`;
+  box.append(ed);
+  wrapSteppers(ed);
+  const q=s=>ed.querySelector(s);
+  q('.cpgType').value=cpGrad.type||'linear';
+  q('.cpgType').onchange=e=>{cpGrad.type=e.target.value;drawCPAngle();drawCPBar();cpGradSync(true);};
+  const ang=q('.cpgAngle');ang.oninput=()=>{cpGrad.angle=+ang.value;const d=q('.cpgDial');if(d)d.innerHTML=fgDialSVG(cpGrad.angle||0);drawCPBar();cpGradSync(false);};ang.onchange=()=>cpGradSync(true);
+  const dial=q('.cpgDial');dial.onpointerdown=e=>{e.preventDefault();const r=dial.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const move=ev=>{const dx=ev.clientX-cx,dy=ev.clientY-cy;let a=Math.round(90-Math.atan2(dy,dx)*180/Math.PI);while(a>180)a-=360;while(a<-180)a+=360;if(ev.shiftKey)a=Math.round(a/15)*15;cpGrad.angle=a;dial.innerHTML=fgDialSVG(a);q('.cpgAngle').value=a;drawCPBar();cpGradSync(false);};
+    const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);cpGradSync(true);};
+    move(e);document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};
+  q('.cpgFlip').onclick=()=>{cpGrad.stops=cpGrad.stops.map(st=>[st[0],Math.round((1-st[1])*1000)/1000]);drawCPBar();cpGradSync(true);};
+  const lbl=document.createElement('div');lbl.className='cpg-savedlabel';lbl.textContent='Saved Gradients';box.append(lbl);
+  const grid=document.createElement('div');box.append(grid);renderCPSavedGrads(grid,false);
+  drawCPAngle();drawCPBar();loadCPStop();cpGradSync(false);cpReposition();}
+function renderCPSavedGrads(grid,applyOnly){grid.className='cpg-savedgrid';grid.innerHTML='';
   const cur=curStyle()[cpTarget||'fill'],curId=(typeof cur==='string'&&cur.startsWith('url('))?cur.slice(5,-1):null;
-  for(const g of allGradients()){const d=document.createElement('div');d.className='cpg'+(g.id===curId?' sel':'');d.style.background=gradCss(g.id);d.title=g.id.startsWith('cg')?'Custom gradient — right-click to edit':'Gradient';d.onclick=()=>applyPaintGradient(g.id);if(g.id.startsWith('cg'))d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>{closeCP();setTab('styles');editGradient(g.id);}},{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPGradients();}}]);box.append(d);}
-  const add=document.createElement('div');add.className='cpg cpgadd';add.textContent='+';add.title='Create a new gradient';add.onclick=()=>{closeCP();setTab('styles');newGradient();};box.append(add);}
+  for(const g of customGradients){const d=document.createElement('div');d.className='cpg'+(g.id===curId?' sel':'');swatchBg(d,gradThumbCss(g.id));
+    if(applyOnly){d.title='Apply · right-click to edit/delete';d.onclick=()=>applyPaintGradient(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>{closeCP();setTab('styles');editGradient(g.id);}},{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPGradients();}}]);}
+    else{d.title='Load into editor · right-click to delete';d.onclick=()=>{cpGrad.type=g.type||'linear';cpGrad.angle=g.angle||0;cpGrad.stops=g.stops.map(s=>s.slice());cpGradStop=0;cpGradSync(true);renderCPGradients();};d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPGradients();}}]);}
+    grid.append(d);}
+  const add=document.createElement('div');add.className='cpg cpgadd';add.textContent='+';
+  if(applyOnly){add.title='Create a new gradient';add.onclick=()=>{closeCP();setTab('styles');newGradient();};}
+  else{add.title='Save current gradient to Library';add.onclick=()=>{if(!cpGrad)return;const st=curStyle(),id=newGradId();customGradients.push({id,type:cpGrad.type||'linear',angle:cpGrad.angle||0,stops:cpGrad.stops.map(s=>s.slice()),opacity:st.fillOpacity==null?1:st.fillOpacity});saveGradients();toast('Gradient added to Library');renderCPGradients();refreshPanels();};}
+  grid.append(add);}
 function openColorFor(kind,anchor){cpTarget=kind;const s=curStyle(),opKey=kind+'Opacity';const cur=s[kind];
   openColorPicker(anchor,toHex(cur),s[opKey]==null?1:s[opKey],
     (hex,a)=>{for(const o of styleTargets()){o[kind]=hex;o[kind+'On']=true;o[opKey]=a;if(kind==='fill')o.fillSolid=hex;}state.style[kind]=hex;state.style[kind+'On']=true;state.style[opKey]=a;if(state.sel.length)render();updateFSSwatch();},
-    ()=>{if(state.sel.length)pushHistory();refreshPanels();});}
-function applyLibGradToFill(id){const lib=allGradients().find(x=>x.id===id);if(!lib)return;const mk=()=>({type:'linear',angle:lib.angle||0,stops:lib.stops.map(x=>x.slice())});
-  for(const o of styleTargets()){o.fillGrad=mk();o.fill='url(#fillg_'+(o.id||'style')+')';o.fillOn=true;}state.style.fillGrad=mk();state.style.fill='url(#fillg_style)';state.style.fillOn=true;
+    ()=>{if(state.sel.length)pushHistory();refreshPanels();});
+  if(typeof cur==='string'&&cur.startsWith('url('))setCPMode('gradient');}
+function applyLibGradToFill(id){const lib=allGradients().find(x=>x.id===id);if(!lib)return;const mk=()=>({type:lib.type||'linear',angle:lib.angle||0,stops:lib.stops.map(x=>x.slice())});
+  for(const o of styleTargets()){o.fillGrad=mk();o.fillGradSrc=id;o.fill='url(#fillg_'+(o.id||'style')+')';o.fillOn=true;if(lib.opacity!=null)o.fillOpacity=lib.opacity;}state.style.fillGrad=mk();state.style.fillGradSrc=id;state.style.fill='url(#fillg_style)';state.style.fillOn=true;if(lib.opacity!=null)state.style.fillOpacity=lib.opacity;
   if(state.sel.length){render();pushHistory();}updateFSSwatch();refreshPanels();}
+// Push the edited library gradient onto the CURRENT SELECTION only — never other objects in the document.
+function applyGradToSel(g){for(const o of styleTargets()){if(!o.fillGrad)continue;o.fillGrad={type:g.type||'linear',angle:g.angle||0,stops:g.stops.map(x=>x.slice())};o.fillGradSrc=g.id;if(g.opacity!=null)o.fillOpacity=g.opacity;}}
 
 //////////////////// INSPECTOR (tabbed palette) ////////////////////
 const INSP_TABS=[
@@ -1420,7 +1581,7 @@ function refreshPanels(){if(!panelBodies.geometry)return;
   if(activeTab==='geometry'){fillGeometry(panelBodies.geometry);wrapSteppers(panelBodies.geometry);}
   else if(activeTab==='appearance'){fillAppearance(panelBodies.appearance);wrapSteppers(panelBodies.appearance);}
   else if(activeTab==='text'){fillText(panelBodies.text);wrapSteppers(panelBodies.text);}
-  else if(activeTab==='styles'){fillStyles(panelBodies.styles);}
+  else if(activeTab==='styles'){fillStyles(panelBodies.styles);wrapSteppers(panelBodies.styles);}
   else if(activeTab==='document'){fillDocument(panelBodies.document);wrapSteppers(panelBodies.document);}
   renderLayers();
   updateFSSwatch();updateBottom();updateToolbar();updateMenuStates();}
@@ -1595,7 +1756,7 @@ function fillAppearance(box){const s=curStyle();
   const capBtn=(v,svg)=>`<button data-cap="${v}" class="${(s.cap||'round')===v?'on':''}">${svg}</button>`;
   const joinBtn=(v,svg)=>`<button data-join="${v}" class="${(s.join||'round')===v?'on':''}">${svg}</button>`;
   const fxSlider=(kind,label,key,min,max,step,val)=>`<div class="row fxsub"><label>${label}</label><div class="ctl"><input type="range" data-fx="${kind}" data-fxk="${key}" min="${min}" max="${max}" step="${step}" value="${val}"><span class="fxval">${key==='opacity'?Math.round(val*100)+'%':val}</span></div></div>`;
-  const paintSlider=(key,label,val)=>`<div class="row fxsub"><label>${label}</label><div class="ctl"><input type="range" data-paint="${key}" min="0" max="1" step="0.01" value="${val}"><span class="fxval">${Math.round(val*100)+'%'}</span></div></div>`;
+  const paintSlider=(key,label,val,extra)=>`<div class="row paintrow"><label>${label}</label><div class="ctl"><input type="range" data-paint="${key}" min="0" max="1" step="0.01" value="${val}"><span class="fxval">${Math.round(val*100)+'%'}</span>${extra||''}</div></div>`;
   const attrOn=k=>k==='fill'?s.fillOn:k==='stroke'?s.strokeOn:!!(s[k]&&s[k].on);
   const attrColor=k=>k==='fill'?(s.fillOn?paintCss(s,'fill'):''):k==='stroke'?(s.strokeOn?fillCss(s.stroke):''):((s[k]&&s[k].color)||(FX_META[k]&&FX_META[k].color)||'');
   function body(k){
@@ -1605,12 +1766,14 @@ function fillAppearance(box){const s=curStyle();
       if(ft==='color'){
         h+=`<div class="row"><label>Color</label><div class="ctl"><span class="attrsw bigsw" data-attrsw="fill" style="background:${paintCss(s,'fill')}"></span><input class="hexin" id="fillHex" spellcheck="false" value="${toHex(s.fill)}"></div></div>`;
       }else{const g=s.fillGrad||{type:ft,angle:-90,stops:[['#5aa0ff',0],['#1b52c9',1]]};if(gradSelStop>=g.stops.length)gradSelStop=0;const sel=g.stops[gradSelStop]||g.stops[0];
-        h+=`<div class="row"><label>Angle</label><div class="ctl"><input type="number" id="fgAngle" value="${g.angle||0}" step="1"${ft==='radial'?' disabled':''}><span style="color:var(--muted)">°</span>${ft==='radial'?'':`<span class="graddial" id="fgDial" title="Drag to set gradient angle">${fgDialSVG(g.angle||0)}</span>`}<button class="fgflip" id="fgFlip" title="Reverse gradient">⇄</button></div></div>`;
+        h+=`<div class="row"><label>Angle</label><div class="ctl"><input type="number" id="fgAngle" value="${g.angle||0}" step="1"${ft==='radial'?' disabled':''}><span style="color:var(--muted)">°</span>${`<span class="graddial" id="fgDial"${ft==='radial'?' style="visibility:hidden"':''} title="Drag to set gradient angle">${fgDialSVG(g.angle||0)}</span>`}<button class="fgflip" id="fgFlip" title="Reverse gradient">⇄</button></div></div>`;
         h+=`<div class="gbar" id="fgBar" style="background:${gradToCss(g)}">${g.stops.map((st,i)=>`<div class="gstop2${i===gradSelStop?' sel':''}" data-fgi="${i}" style="left:${st[1]*100}%;--c:${st[0]}"></div>`).join('')}</div>`;
         h+=`<div class="gradHint">Click a stop to edit its color · drag to move · click empty bar to add a stop</div>`;
-        h+=`<div class="row"><label>Stop</label><div class="ctl"><span class="gstopsw" id="fgStopSw" style="background:${sel[0]}"></span><input class="hexin" id="fgStopHex" spellcheck="false" value="${toHex(sel[0])}"><input type="number" id="fgStopPos" min="0" max="100" value="${Math.round(sel[1]*100)}"><button id="fgStopDel"${g.stops.length<=2?' disabled':''}>✕</button></div></div>`;
+        h+=`<div class="row stoprow"><label>Stop</label><div class="ctl"><span class="gstopsw" id="fgStopSw" style="background:${sel[0]}"></span><input class="hexin" id="fgStopHex" spellcheck="false" value="${toHex(sel[0])}"><input type="number" id="fgStopPos" min="0" max="100" value="${Math.round(sel[1]*100)}"><button id="fgStopDel"${g.stops.length<=2?' disabled':''}>✕</button></div></div>`;
       }
-      h+=paintSlider('fillOpacity','Opacity',s.fillOpacity!=null?s.fillOpacity:1);
+      h+=paintSlider('fillOpacity','Opacity',s.fillOpacity!=null?s.fillOpacity:1,
+        ft==='color'?`<button id="fgSaveColorLib" class="fgsavelib" title="Save this color to your Library">Save</button>`
+                    :`<button id="fgSaveLib" class="fgsavelib" title="Save this gradient to your Library">Save</button>`);
       return h;}
     if(k==='stroke')return `
       <div class="row"><label>Weight</label><div class="ctl"><input type="range" class="wtslider" id="apWr" min="0" max="${Math.max(20,Math.ceil((+s.strokeWidth||0)+1))}" step="0.5" value="${s.strokeWidth}"><input type="number" id="apW" value="${s.strokeWidth}" min="0" step="0.5"><span style="color:var(--muted)">pt</span></div></div>
@@ -1630,7 +1793,7 @@ function fillAppearance(box){const s=curStyle();
     const swatch=(k==='blur')?'<span class="attrsw blursw"></span>':
       isFx?`<label class="attrsw" style="background:${col}" title="Effect color"><input type="color" class="swpick" data-fxcolor="${k}" value="${col||'#000000'}"></label>`:
       `<span class="attrsw ${on?'':'none'}" data-attrsw="${k}" style="background:${on?col:''}" title="Change ${label.toLowerCase()} color"></span>`;
-    let h=`<div class="attr${on?'':' off'}${exp?' exp':''}" data-attr="${k}" ${isFx?'draggable="true"':''}>`+
+    let h=`<div class="attr${on?'':' off'}${exp?' exp':''}${isFx?' fx':''}" data-attr="${k}" ${isFx?'draggable="true"':''}>`+
       `<input type="checkbox" class="attrchk" data-attrchk="${k}" ${on?'checked':''}>`+
       `<span class="attricon">${attrIcon(k)}</span>`+
       `<span class="attrname" data-attrexp="${k}">${label}</span>`+
@@ -1678,6 +1841,8 @@ function fillAppearance(box){const s=curStyle();
     const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);syncFillGrad(true);};
     move(e);document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};}
   const fgFlip=box.querySelector('#fgFlip');if(fgFlip)fgFlip.onclick=()=>{const g=curFillGrad();g.stops=g.stops.map(st=>[st[0],Math.round((1-st[1])*1000)/1000]);syncFillGrad(true);};
+  const fgSaveLib=box.querySelector('#fgSaveLib');if(fgSaveLib)fgSaveLib.onclick=()=>{const g=curFillGrad();if(!g)return;const st=curStyle(),id=newGradId();customGradients.push({id,type:g.type||'linear',angle:g.angle||0,stops:g.stops.map(x=>x.slice()),opacity:st.fillOpacity==null?1:st.fillOpacity});saveGradients();render();toast('Gradient added to Library');refreshPanels();};
+  const fgSaveColorLib=box.querySelector('#fgSaveColorLib');if(fgSaveColorLib)fgSaveColorLib.onclick=()=>{const st=curStyle(),c=withAlpha(toHex(st.fill),st.fillOpacity==null?1:st.fillOpacity);if(c&&!customSwatches.includes(c)){customSwatches.push(c);saveSwatches();toast('Color added to Library');}else toast('Color already in Library');refreshPanels();};
   const fgStopSw=box.querySelector('#fgStopSw');if(fgStopSw)fgStopSw.onclick=()=>openColorPicker(fgStopSw,toHex((curFillGrad().stops[gradSelStop]||curFillGrad().stops[0])[0]),1,hex=>{curFillGrad().stops[gradSelStop][0]=hex;fgSyncUI();render();},()=>syncFillGrad(true));
   const fgStopHex=box.querySelector('#fgStopHex');if(fgStopHex)fgStopHex.onchange=()=>{curFillGrad().stops[gradSelStop][0]=toHex(fgStopHex.value);syncFillGrad(true);};
   const fgStopPos=box.querySelector('#fgStopPos');if(fgStopPos)fgStopPos.onchange=()=>{curFillGrad().stops[gradSelStop][1]=clamp01((+fgStopPos.value)/100);syncFillGrad(true);};
@@ -1721,7 +1886,7 @@ function objectContextMenu(e){
     ctxMenu(e,[
       ...(oneImg?[{label:'Crop Image',fn:()=>startCrop(selShapes()[0])},{sep:true}]:[]),
       ...(hasText?[{label:'Convert to Objects',fn:splitTextToLetters},{sep:true}]:[]),
-      {label:'Copy',fn:copySel},{label:'Paste',fn:()=>doPaste(toSVG(e.clientX,e.clientY))},{label:'Duplicate',fn:duplicateSel},{label:'Delete',danger:true,fn:deleteSel},
+      {label:'Cut',fn:cutSel},{label:'Copy',fn:copySel},{label:'Paste',fn:()=>doPaste(toSVG(e.clientX,e.clientY))},{label:'Duplicate',fn:duplicateSel},{label:'Delete',danger:true,fn:deleteSel},
       {sep:true},
       {label:'Bring to Front',fn:()=>arrange('front')},{label:'Bring Forward',disabled:state.sel.length!==1,fn:()=>moveLayer(1)},{label:'Send Backward',disabled:state.sel.length!==1,fn:()=>moveLayer(-1)},{label:'Send to Back',fn:()=>arrange('back')},
       {sep:true},
@@ -1733,72 +1898,83 @@ function objectContextMenu(e){
 }
 stage.addEventListener('contextmenu',objectContextMenu);
 function editSwatch(i,anchor){openColorPicker(anchor,toHex(customSwatches[i]),1,hex=>{customSwatches[i]=hex;anchor.style.background=hex;anchor.title=hex;},()=>{saveSwatches();refreshPanels();});setCPMode('color');}
-function newGradient(){const id='cg'+(uidc++);customGradients.push({id,stops:[['#3d8bff',0],['#1b52c9',1]],angle:0,_new:true});gradEditId=id;gradSelStop=0;saveGradients();refreshPanels();}
+// "+" duplicates whatever is currently in the editor (so no surprise colour); falls back to a default when nothing is open
+function newGradient(){const src=customGradients.find(x=>x.id===gradEditId);const id=newGradId();
+  customGradients.push({id,type:src?(src.type||'linear'):'linear',angle:src?(src.angle||0):0,stops:src?src.stops.map(s=>s.slice()):[['#3d8bff',0],['#1b52c9',1]],opacity:src&&src.opacity!=null?src.opacity:1,_new:true});
+  gradEditId=id;gradSelStop=0;saveGradients();refreshPanels();}
 function editGradient(id){gradEditId=id;gradSelStop=0;refreshPanels();}
 function deleteGradient(id){customGradients=customGradients.filter(x=>x.id!==id);if(gradEditId===id)gradEditId=null;saveGradients();render();refreshPanels();}
 function closeGradEditor(cancel){const g=customGradients.find(x=>x.id===gradEditId);if(g){if(cancel&&g._new){customGradients=customGradients.filter(x=>x.id!==gradEditId);}else{delete g._new;}saveGradients();}gradEditId=null;render();refreshPanels();}
 function renderGradEditor(box,g){
+  if(gradSelStop>=g.stops.length)gradSelStop=0;
   const ed=document.createElement('div');ed.className='gradEditor';
   const sel=()=>g.stops[gradSelStop]||g.stops[0];
-  const stopsHtml=()=>g.stops.map((s,i)=>`<div class="gstop${i===gradSelStop?' sel':''}" data-gi="${i}" style="left:${s[1]*100}%;--c:${s[0]}"></div>`).join('');
-  ed.innerHTML=`<div class="gradEdTitle">Gradient Editor</div>
-    <div class="gradRamp"></div>
-    <div class="gradStops"></div>
-    <div class="gradHint">Click the bar to add a color stop · drag a handle to move it</div>
-    <div class="row"><label>Stop color</label><div class="ctl"><span class="gstopsw" title="Pick color"></span><input class="gstophex" spellcheck="false"><button class="gstopdel" title="Delete this stop">Delete</button></div></div>
-    <div class="row"><label>Position</label><div class="ctl"><input type="range" class="gstoppos" min="0" max="100"><span class="fxval"></span></div></div>
-    <div class="row"><label>Angle</label><div class="ctl"><input type="range" class="gradang" min="0" max="360" value="${g.angle||0}"><span class="fxval">${g.angle||0}°</span></div></div>
-    <div class="gradEdActions"><button class="gApply">Apply Fill</button><button class="gApplyStroke">Stroke</button><button class="gDone">Done</button><button class="gCancel">Cancel</button></div>`;
+  ed.innerHTML=`<div class="gradEdTitle">Edit Gradient</div>
+    <div class="row"><label>Type</label><div class="ctl"><select class="geType"><option value="linear"${(g.type||'linear')==='linear'?' selected':''}>Linear Gradient</option><option value="radial"${g.type==='radial'?' selected':''}>Radial Gradient</option></select></div></div>
+    <div class="row"><label>Angle</label><div class="ctl"><input type="number" class="geAngle" value="${g.angle||0}" step="1"${g.type==='radial'?' disabled':''}><span style="color:var(--muted)">°</span><span class="graddial geDial"${g.type==='radial'?' style="visibility:hidden"':''} title="Drag to set gradient angle">${fgDialSVG(g.angle||0)}</span><button class="fgflip geFlip" title="Reverse gradient">⇄</button></div></div>
+    <div class="gbar geBar"></div>
+    <div class="gradHint">Click a stop to edit its color · drag to move · click empty bar to add a stop</div>
+    <div class="row stoprow"><label>Stop</label><div class="ctl"><span class="gstopsw geSw"></span><input class="hexin geHex" spellcheck="false"><input type="number" class="gePos" min="0" max="100"><button class="geDel">✕</button></div></div>
+    <div class="row paintrow"><label>Opacity</label><div class="ctl"><input type="range" class="geOpacity" min="0" max="1" step="0.01" value="${g.opacity==null?1:g.opacity}"><span class="fxval geOpVal">${Math.round((g.opacity==null?1:g.opacity)*100)}%</span><button class="geDone fgsavelib">Done</button></div></div>
+    <div class="gradEdActions"><button class="geDelG">Delete gradient</button></div>`;
   box.prepend(ed);
   const q=s=>ed.querySelector(s);
-  function redraw(){const s=sel();
-    q('.gradRamp').style.background=gradCss(g.id);
-    q('.gradStops').innerHTML=stopsHtml();bindStops();
-    q('.gstopsw').style.background=s[0];q('.gstophex').value=toHex(s[0]);
-    q('.gstoppos').value=Math.round(s[1]*100);q('.gstoppos').nextElementSibling.textContent=Math.round(s[1]*100)+'%';
-    q('.gstopdel').disabled=g.stops.length<=2;}
-  function bindStops(){q('.gradStops').querySelectorAll('.gstop').forEach(h=>{
-    h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();gradSelStop=+h.dataset.gi;redraw();
-      const strip=q('.gradStops'),r=strip.getBoundingClientRect();
-      const move=ev=>{g.stops[gradSelStop][1]=Math.round(clamp01((ev.clientX-r.left)/r.width)*1000)/1000;render();redraw();};
-      const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);saveGradients();};
-      document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};});}
-  function addAt(clientX,rect){const p=clamp01((clientX-rect.left)/rect.width),ss=[...g.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];
-    for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}
-    g.stops.push([col,Math.round(p*1000)/1000]);gradSelStop=g.stops.length-1;saveGradients();render();redraw();}
-  q('.gradRamp').onpointerdown=e=>addAt(e.clientX,q('.gradRamp').getBoundingClientRect());
-  q('.gradStops').onpointerdown=e=>{if(e.target===q('.gradStops'))addAt(e.clientX,q('.gradStops').getBoundingClientRect());};
-  q('.gstopsw').onclick=()=>openColorPicker(q('.gstopsw'),toHex(sel()[0]),1,hex=>{g.stops[gradSelStop][0]=hex;render();redraw();},()=>saveGradients());
-  q('.gstophex').onchange=e=>{g.stops[gradSelStop][0]=toHex(e.target.value);saveGradients();render();redraw();};
-  q('.gstoppos').oninput=e=>{g.stops[gradSelStop][1]=clamp01((+e.target.value)/100);render();redraw();};
-  q('.gstoppos').onchange=()=>saveGradients();
-  q('.gstopdel').onclick=()=>{if(g.stops.length>2){g.stops.splice(gradSelStop,1);gradSelStop=Math.max(0,gradSelStop-1);saveGradients();render();redraw();}};
-  const ang=q('.gradang');ang.oninput=()=>{g.angle=+ang.value;ang.nextElementSibling.textContent=ang.value+'°';q('.gradRamp').style.background=gradCss(g.id);render();};ang.onchange=()=>saveGradients();
-  q('.gApply').onclick=()=>{delete g._new;saveGradients();applyLibGradToFill(g.id);};
-  q('.gApplyStroke').onclick=()=>{delete g._new;applyStyle('stroke','url(#'+g.id+')');applyStyle('strokeOn',true,true);saveGradients();};
-  q('.gDone').onclick=()=>closeGradEditor(false);
-  q('.gCancel').onclick=()=>closeGradEditor(true);
+  const liveSync=()=>{applyGradToSel(g);refreshCPGradFromSel();render();};
+  function drawBar(){q('.geBar').style.background=gradToCss(g);q('.geBar').innerHTML=g.stops.map((st,i)=>`<div class="gstop2${i===gradSelStop?' sel':''}" data-gi="${i}" style="left:${st[1]*100}%;--c:${st[0]}"></div>`).join('');bindStops();}
+  function drawStop(){const s=sel();q('.geSw').style.background=s[0];q('.geHex').value=toHex(s[0]);q('.gePos').value=Math.round(s[1]*100);q('.geDel').disabled=g.stops.length<=2;}
+  function redraw(){drawBar();drawStop();q('.geDial').innerHTML=fgDialSVG(g.angle||0);q('.geAngle').value=g.angle||0;}
+  function commit(){saveGradients();applyGradToSel(g);refreshCPGradFromSel();render();const th=document.querySelector('#stGrads [data-gid="'+g.id+'"]');if(th)swatchBg(th,gradThumbCss(g.id));}
+  function bindStops(){q('.geBar').querySelectorAll('.gstop2').forEach(h=>{h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();gradSelStop=+h.dataset.gi;drawBar();drawStop();
+    const r=q('.geBar').getBoundingClientRect();
+    const move=ev=>{g.stops[gradSelStop][1]=clamp01((ev.clientX-r.left)/r.width);drawBar();drawStop();liveSync();};
+    const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);commit();};
+    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};});}
+  q('.geBar').onpointerdown=e=>{if(e.target!==q('.geBar'))return;const r=q('.geBar').getBoundingClientRect(),p=clamp01((e.clientX-r.left)/r.width),ss=[...g.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}g.stops.push([col,Math.round(p*1000)/1000]);gradSelStop=g.stops.length-1;commit();redraw();};
+  q('.geSw').onclick=()=>openColorPicker(q('.geSw'),toHex(sel()[0]),1,hex=>{g.stops[gradSelStop][0]=hex;drawBar();drawStop();liveSync();},()=>commit());
+  q('.geHex').onchange=e=>{g.stops[gradSelStop][0]=toHex(e.target.value);drawBar();drawStop();commit();};
+  q('.gePos').oninput=e=>{g.stops[gradSelStop][1]=clamp01((+e.target.value)/100);drawBar();liveSync();};
+  q('.gePos').onchange=()=>commit();
+  q('.geDel').onclick=()=>{if(g.stops.length>2){g.stops.splice(gradSelStop,1);gradSelStop=Math.max(0,gradSelStop-1);commit();redraw();}};
+  const ang=q('.geAngle');ang.oninput=()=>{g.angle=+ang.value;q('.geDial').innerHTML=fgDialSVG(g.angle||0);q('.geBar').style.background=gradToCss(g);liveSync();};ang.onchange=()=>commit();
+  const dial=q('.geDial');dial.onpointerdown=e=>{e.preventDefault();const r=dial.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const move=ev=>{const dx=ev.clientX-cx,dy=ev.clientY-cy;let a=Math.round(90-Math.atan2(dy,dx)*180/Math.PI);while(a>180)a-=360;while(a<-180)a+=360;if(ev.shiftKey)a=Math.round(a/15)*15;g.angle=a;q('.geDial').innerHTML=fgDialSVG(a);q('.geAngle').value=a;q('.geBar').style.background=gradToCss(g);liveSync();};
+    const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);commit();};
+    move(e);document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};
+  q('.geFlip').onclick=()=>{g.stops=g.stops.map(st=>[st[0],Math.round((1-st[1])*1000)/1000]);commit();redraw();};
+  const gop=q('.geOpacity');gop.oninput=()=>{g.opacity=+gop.value;q('.geOpVal').textContent=Math.round(g.opacity*100)+'%';liveSync();};gop.onchange=()=>commit();
+  q('.geType').onchange=e=>{g.type=e.target.value;ang.disabled=(g.type==='radial');q('.geDial').style.visibility=(g.type==='radial')?'hidden':'';q('.geBar').style.background=gradToCss(g);commit();};
+  q('.geDone').onclick=()=>{delete g._new;saveGradients();gradEditId=null;render();refreshPanels();};
+  q('.geDelG').onclick=()=>deleteGradient(g.id);
   redraw();
 }
-function applyLibColor(c){applyStyle(libTarget,c,false);if(libTarget==='stroke'){for(const o of styleTargets())if(!(o.strokeWidth>0))o.strokeWidth=1;if(!(state.style.strokeWidth>0))state.style.strokeWidth=1;}applyStyle(libTarget+'On',true,true);}
-function fillStyles(box){const lbl='padding:6px 12px 2px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;';
-  box.innerHTML=`<div class="libtargetrow"><span class="libtargetlbl">Apply to:</span><div class="seg libtarget"><button data-lt="fill" class="${libTarget==='fill'?'on':''}">Fill</button><button data-lt="stroke" class="${libTarget==='stroke'?'on':''}">Stroke</button></div></div>
-    <div style="${lbl}">Solid Colors</div><div class="styles-grid" id="stSolids"></div>
-    <div style="${lbl}">Gradients <span style="text-transform:none;color:var(--muted);opacity:.7;">— fill only · right-click custom to edit/delete</span></div><div class="styles-grid" id="stGrads"></div>
-    <div style="${lbl}">My Swatches <span style="text-transform:none;color:var(--muted);opacity:.7;">— click apply · right-click delete</span></div><div class="styles-grid" id="stCustom"></div>`;
-  box.querySelectorAll('[data-lt]').forEach(b=>b.onclick=()=>{libTarget=b.dataset.lt;box.querySelectorAll('[data-lt]').forEach(x=>x.classList.toggle('on',x.dataset.lt===libTarget));});
-  const sol=box.querySelector('#stSolids');for(const c of SOLIDS){const d=document.createElement('div');d.className='st';d.style.background=c;d.title=c;d.onclick=()=>applyLibColor(c);sol.append(d);}
+function applyLibColor(c){const hex=swHex(c);applyStyle(libTarget,hex,false);applyStyle(libTarget+'Opacity',swAlpha(c),false);if(libTarget==='fill')for(const o of styleTargets())o.fillSolid=hex;if(libTarget==='stroke'){for(const o of styleTargets())if(!(o.strokeWidth>0))o.strokeWidth=1;if(!(state.style.strokeWidth>0))state.style.strokeWidth=1;}applyStyle(libTarget+'On',true,true);}
+function applyLibGrad(id){if(libTarget==='stroke'){for(const o of styleTargets()){o.stroke='url(#'+id+')';o.strokeOn=true;if(!(o.strokeWidth>0))o.strokeWidth=1;}state.style.stroke='url(#'+id+')';state.style.strokeOn=true;if(!(state.style.strokeWidth>0))state.style.strokeWidth=1;if(state.sel.length)render();pushHistory();updateFSSwatch();refreshPanels();}else applyLibGradToFill(id);}
+// Library click: apply the gradient to the selection AND open its editor (edits auto-save + live-apply)
+function applyAndEditGrad(id){gradEditId=id;gradSelStop=0;applyLibGrad(id);}
+// Library click: apply the color, then open the picker to adjust it — edits update the library swatch + the object live
+function editApplyColor(i){applyLibColor(customSwatches[i]);const anchor=document.querySelector('#stCustom .st[data-si="'+i+'"]')||document.body;
+  openColorPicker(anchor,swHex(customSwatches[i]),swAlpha(customSwatches[i]),
+    (hex,a)=>{customSwatches[i]=withAlpha(toHex(hex),a);applyStyle(libTarget,toHex(hex),false);applyStyle(libTarget+'Opacity',a,false);if(libTarget==='fill')for(const o of styleTargets())o.fillSolid=toHex(hex);updateFSSwatch();},
+    ()=>{saveSwatches();if(state.sel.length)pushHistory();refreshPanels();});}
+function fillStyles(box){const lbl='padding:8px 12px 3px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;';
+  box.innerHTML=`<div class="libtargetrow"><span class="libtargetlbl">Apply to</span><div class="seg libtarget"><button data-lt="fill"${libTarget==='fill'?' class="on"':''}>Fill</button><button data-lt="stroke"${libTarget==='stroke'?' class="on"':''}>Stroke</button></div></div>
+    <div style="${lbl}">Custom Colors</div><div class="styles-grid" id="stCustom"></div>
+    <div style="${lbl}">Custom Gradients</div><div class="styles-grid" id="stGrads"></div>`;
+  box.querySelectorAll('[data-lt]').forEach(b=>b.onclick=()=>{libTarget=b.dataset.lt;refreshPanels();});
+  const cu=box.querySelector('#stCustom');
+  customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='st';d.dataset.si=i;swatchBg(d,fillCss(c));d.title=c+' — click to apply & edit · right-click to delete';d.onclick=()=>editApplyColor(i);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();refreshPanels();}}]);cu.append(d);});
+  const add=document.createElement('div');add.className='st stadd';add.textContent='+';add.title='Create a custom color';add.onclick=()=>{let temp='#3d8bff';openColorPicker(add,temp,1,(hex)=>{temp=hex;},()=>{if(temp&&!customSwatches.includes(temp)){customSwatches.push(temp);saveSwatches();}refreshPanels();});};cu.append(add);
   const gr=box.querySelector('#stGrads');
-  for(const g of GRADIENTS){const d=document.createElement('div');d.className='st';d.style.background=gradCss(g.id);d.title='Apply as fill';d.onclick=()=>applyLibGradToFill(g.id);gr.append(d);}
-  for(const g of customGradients){const d=document.createElement('div');d.className='st'+(g.id===gradEditId?' editing':'');d.style.background=gradCss(g.id);d.title='Apply as fill — right-click to edit or delete';d.onclick=()=>applyLibGradToFill(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>editGradient(g.id)},{label:'Delete',danger:true,fn:()=>deleteGradient(g.id)}]);gr.append(d);}
-  const gadd=document.createElement('div');gadd.className='st stadd';gadd.textContent='+';gadd.title='Create a custom gradient';gadd.onclick=()=>newGradient();gr.append(gadd);
-  const cu=box.querySelector('#stCustom');customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='st';d.style.background=fillCss(c);d.title=c+' — right-click to edit or delete';d.onclick=()=>applyLibColor(c);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit color…',fn:()=>editSwatch(i,d)},{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();refreshPanels();}}]);cu.append(d);});
-  const add=document.createElement('div');add.className='st stadd';add.textContent='+';add.title='Create a custom color (hex / RGB)';add.onclick=()=>{let temp=toHex(curStyle().fill||'#3d8bff');openColorPicker(add,temp,1,(hex)=>{temp=hex;},()=>{if(temp&&!customSwatches.includes(temp)){customSwatches.push(temp);saveSwatches();}refreshPanels();});};cu.append(add);
+  for(const g of customGradients){const d=document.createElement('div');d.className='st'+(g.id===gradEditId?' editing':'');d.dataset.gid=g.id;swatchBg(d,gradThumbCss(g.id));d.title='Click to apply & edit · right-click to delete';d.onclick=()=>applyAndEditGrad(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>deleteGradient(g.id)}]);gr.append(d);}
+  const gadd=document.createElement('div');gadd.className='st stadd';gadd.textContent='+';gadd.title='Create a custom gradient';gadd.onclick=()=>{newGradient();applyLibGrad(gradEditId);};gr.append(gadd);
   const gEdit=customGradients.find(x=>x.id===gradEditId);if(gEdit)renderGradEditor(box,gEdit);}
 
 //////////////////// LAYERS ////////////////////
-function objectRow(s){
-  const d=document.createElement('div');d.className='layer'+(state.sel.includes(s.id)?' sel':'')+(s.visible===false?' hidden':'');
+function objectRow(s,nested){
+  const d=document.createElement('div');d.className='layer'+(nested?' nested':'')+(state.sel.includes(s.id)?' sel':'')+(s.visible===false?' hidden':'');
+  d.draggable=true;
+  d.ondragstart=ev=>{ev.stopPropagation();_dragItem={type:'obj',ids:[s.id]};ev.dataTransfer.effectAllowed='move';try{ev.dataTransfer.setData('text/plain','o');}catch(_){}};
+  d.ondragend=()=>{_dragItem=null;document.querySelectorAll('#layers .lyr.drop').forEach(el=>el.classList.remove('drop'));};
   const eye=document.createElement('div');eye.className='eye';eye.innerHTML=s.visible===false?eyeOff():eyeOn();eye.onclick=ev=>{ev.stopPropagation();s.visible=s.visible===false?true:false;pushHistory();render();renderLayers();};
   const sw=document.createElement('div');sw.className='swatch';sw.style.background=s.fillOn?paintCss(s,'fill'):(s.strokeOn?fillCss(s.stroke):'transparent');
   const nm=document.createElement('div');nm.className='name';nm.textContent=s.name;
@@ -1809,21 +1985,72 @@ function objectRow(s){
   d.onclick=ev=>{state.activeLayer=s.layerId;if(ev.shiftKey){if(state.sel.includes(s.id))state.sel=state.sel.filter(x=>x!==s.id);else state.sel.push(s.id);}else state.sel=[s.id];syncStyleFromSel();render();refreshPanels();};
   return d;
 }
+function groupRow(gid,members,L){
+  const gexp=expandedNodes.has(gid);
+  const wrap=document.createElement('div');wrap.className='grp';
+  const row=document.createElement('div');row.className='grow'+(members.length&&members.every(m=>state.sel.includes(m.id))?' sel':'');
+  row.draggable=true;
+  row.ondragstart=ev=>{ev.stopPropagation();_dragItem={type:'obj',ids:members.map(m=>m.id)};ev.dataTransfer.effectAllowed='move';try{ev.dataTransfer.setData('text/plain','g');}catch(_){}};
+  row.ondragend=()=>{_dragItem=null;document.querySelectorAll('#layers .lyr.drop').forEach(el=>el.classList.remove('drop'));};
+  const tri=document.createElement('span');tri.className='lyr-tri grp-tri'+(gexp?' open':'');tri.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';tri.onclick=e=>{e.stopPropagation();if(gexp)expandedNodes.delete(gid);else expandedNodes.add(gid);renderLayers();};
+  const ic=document.createElement('span');ic.className='grow-ic';ic.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="8" height="8" rx="1"/><rect x="12.5" y="12.5" width="8" height="8" rx="1"/><path d="M12 7h5.5A2.5 2.5 0 0120 9.5V15"/></svg>';
+  const nm=document.createElement('span');nm.className='grow-name';nm.textContent='Group ('+members.length+')';
+  const eye=document.createElement('div');eye.className='eye';const anyVis=members.some(m=>m.visible!==false);eye.innerHTML=anyVis?eyeOn():eyeOff();eye.onclick=e=>{e.stopPropagation();members.forEach(m=>m.visible=anyVis?false:true);pushHistory();render();renderLayers();};
+  row.append(tri,ic,nm,eye);
+  row.onclick=ev=>{_lastLayerClick=null;state.activeLayer=L.id;if(ev.shiftKey){const has=members.every(m=>state.sel.includes(m.id));state.sel=has?state.sel.filter(x=>!members.some(m=>m.id===x)):[...new Set([...state.sel,...members.map(m=>m.id)])];}else state.sel=members.map(m=>m.id);syncStyleFromSel();render();refreshPanels();};
+  wrap.append(row);
+  if(gexp){const inner=document.createElement('div');inner.className='grp-objs';for(let i=members.length-1;i>=0;i--)inner.append(objectRow(members[i],true));wrap.append(inner);}
+  return wrap;
+}
+function moveItemsToLayer(ids,layerId){const set=new Set(ids);const moving=state.shapes.filter(s=>set.has(s.id));if(!moving.length)return;
+  if(moving.every(s=>s.layerId===layerId))return;
+  for(const s of moving)s.layerId=layerId;
+  state.shapes=state.shapes.filter(s=>!set.has(s.id)).concat(moving);
+  state.activeLayer=layerId;state.sel=moving.map(s=>s.id);
+  pushHistory();render();refreshPanels();}
+function moveLayerRelative(dragId,targetId,above){if(dragId===targetId)return;
+  const from=state.layers.findIndex(l=>l.id===dragId);if(from<0)return;const[dl]=state.layers.splice(from,1);
+  const ti=state.layers.findIndex(l=>l.id===targetId);if(ti<0){state.layers.splice(from,0,dl);return;}
+  state.layers.splice(above?ti+1:ti,0,dl);state.activeLayer=dragId;pushHistory();render();refreshPanels();}
+let _lastLayerClick=null;
+function setActiveLayer(id){if(!id)return;state.activeLayer=id;state.sel=state.sel.filter(sid=>{const s=state.shapes.find(x=>x.id===sid);return s&&s.layerId===id;});syncStyleFromSel();render();refreshPanels();}
+let _layerScrollTimer=null,_layerScrollDir=0;
+function _layerStopScroll(){_layerScrollDir=0;if(_layerScrollTimer){clearInterval(_layerScrollTimer);_layerScrollTimer=null;}}
+function _layerEdgeScroll(e){const box=document.getElementById('layers');if(!box)return;const r=box.getBoundingClientRect(),edge=36;
+  _layerScrollDir=e.clientY<r.top+edge?-1:e.clientY>r.bottom-edge?1:0;
+  if(_layerScrollDir&&!_layerScrollTimer)_layerScrollTimer=setInterval(()=>{const b=document.getElementById('layers');if(b&&_layerScrollDir)b.scrollTop+=_layerScrollDir*9;else _layerStopScroll();},16);
+  else if(!_layerScrollDir)_layerStopScroll();}
+document.addEventListener('dragend',()=>{_dragItem=null;_layerStopScroll();document.querySelectorAll('#layers .lyr.drop').forEach(el=>el.classList.remove('drop'));});
 function renderLayers(){const box=document.getElementById('layers');if(!box)return;box.innerHTML='';
-  for(let li=state.layers.length-1;li>=0;li--){const L=state.layers[li];const exp=!collapsedLayers.has(L.id);
+  box.ondragover=e=>{if(_dragItem){e.preventDefault();_layerEdgeScroll(e);}};
+  box.ondragleave=e=>{if(!box.contains(e.relatedTarget))_layerStopScroll();};
+  for(let li=state.layers.length-1;li>=0;li--){const L=state.layers[li];const exp=expandedNodes.has(L.id);
     const wrap2=document.createElement('div');wrap2.className='lyr'+(L.id===state.activeLayer?' active':'');
+    wrap2.ondragover=e=>{if(_dragItem){e.preventDefault();e.dataTransfer.dropEffect='move';wrap2.classList.add('drop');}};
+    wrap2.ondragleave=e=>{if(!wrap2.contains(e.relatedTarget))wrap2.classList.remove('drop');};
+    wrap2.ondrop=e=>{if(!_dragItem)return;e.preventDefault();e.stopPropagation();const di=_dragItem;_dragItem=null;wrap2.classList.remove('drop');_layerStopScroll();
+      if(di.type==='layer'){const rct=head.getBoundingClientRect();moveLayerRelative(di.id,L.id,e.clientY<rct.top+rct.height/2);}
+      else moveItemsToLayer(di.ids,L.id);};
     const head=document.createElement('div');head.className='lyr-head';
-    const tri=document.createElement('span');tri.className='lyr-tri'+(exp?' open':'');tri.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';tri.onclick=e=>{e.stopPropagation();if(exp)collapsedLayers.add(L.id);else collapsedLayers.delete(L.id);renderLayers();};
+    const objCount=state.shapes.filter(s=>s.layerId===L.id).length;
+    const tri=document.createElement('span');tri.className='lyr-tri'+(exp?' open':'');tri.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';tri.onclick=e=>{e.stopPropagation();if(exp)expandedNodes.delete(L.id);else expandedNodes.add(L.id);renderLayers();};
     const eye=document.createElement('span');eye.className='lyr-eye';eye.innerHTML=L.visible===false?eyeOff():eyeOn();eye.onclick=e=>{e.stopPropagation();toggleLayerVis(L);};
     const lock=document.createElement('span');lock.className='lyr-lock'+(L.locked?' on':'');lock.innerHTML=L.locked?lockIcon():unlockIcon();lock.onclick=e=>{e.stopPropagation();toggleLayerLock(L);};
     const nm=document.createElement('span');nm.className='lyr-name';nm.textContent=L.name;
-    nm.ondblclick=e=>{e.stopPropagation();nm.contentEditable=true;nm.focus();document.execCommand('selectAll',false,null);};
+    const cnt=document.createElement('span');cnt.className='lyr-count';cnt.textContent=objCount||'';
     nm.onblur=()=>{nm.contentEditable=false;L.name=nm.textContent.trim()||L.name;nm.textContent=L.name;pushHistory();};
     nm.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();nm.blur();}};
-    head.append(tri,nm,lock,eye);head.onclick=()=>{state.activeLayer=L.id;renderLayers();};
+    head.append(tri,nm,cnt,lock,eye);
+    head.onclick=()=>{if(nm.isContentEditable)return;const now=Date.now();
+      if(_lastLayerClick&&_lastLayerClick.id===L.id&&now-_lastLayerClick.t<450){_lastLayerClick=null;nm.contentEditable=true;nm.focus();document.execCommand('selectAll',false,null);return;}
+      _lastLayerClick={id:L.id,t:now};setActiveLayer(L.id);};
+    head.draggable=true;
+    head.ondragstart=e=>{if(nm.isContentEditable){e.preventDefault();return;}_dragItem={type:'layer',id:L.id};e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','L');}catch(_){}};
     wrap2.append(head);
-    if(exp){const objs=document.createElement('div');objs.className='lyr-objs';const ls=state.shapes.filter(s=>s.layerId===L.id);
-      for(let i=ls.length-1;i>=0;i--)objs.append(objectRow(ls[i]));
+    if(exp){const objs=document.createElement('div');objs.className='lyr-objs';const ls=state.shapes.filter(s=>s.layerId===L.id);const shown=new Set();
+      for(let i=ls.length-1;i>=0;i--){const s=ls[i];
+        if(s.groupId){if(shown.has(s.groupId))continue;shown.add(s.groupId);objs.append(groupRow(s.groupId,ls.filter(x=>x.groupId===s.groupId),L));}
+        else objs.append(objectRow(s,false));}
       if(!ls.length){const em=document.createElement('div');em.className='lyr-empty';em.textContent='(empty)';objs.append(em);}
       wrap2.append(objs);}
     box.append(wrap2);
@@ -1928,7 +2155,7 @@ function deleteSel(){if(!state.sel.length)return;state.shapes=state.shapes.filte
 function selectAll(){state.sel=state.shapes.filter(s=>s.visible!==false).map(s=>s.id);syncStyleFromSel();render();refreshPanels();}
 function copySel(){if(!state.sel.length)return;clipboard=selShapes().map(s=>JSON.parse(JSON.stringify(s)));}
 function cutSel(){if(!state.sel.length)return;copySel();deleteSel();}
-function pasteClip(){if(!clipboard.length)return;const copies=clipboard.map(s=>{const c=JSON.parse(JSON.stringify(s));c.id=uid();reidGrad(c);c.name=s.name+' copy';translateShape(c,14,14);return c;});state.shapes.push(...copies);state.sel=copies.map(c=>c.id);pushHistory();render();refreshPanels();}
+function pasteClip(){if(!clipboard.length)return;const gmap={};const copies=clipboard.map(s=>{const c=JSON.parse(JSON.stringify(s));c.id=uid();reidGrad(c);c.name=s.name+' copy';c.layerId=state.activeLayer;if(c.groupId){if(!gmap[c.groupId])gmap[c.groupId]='g'+(uidc++);c.groupId=gmap[c.groupId];}translateShape(c,14,14);return c;});state.shapes.push(...copies);state.sel=copies.map(c=>c.id);pushHistory();render();refreshPanels();}
 let _toastT=null;
 function toast(msg){let t=document.getElementById('gtoast');if(!t){t=document.createElement('div');t.id='gtoast';document.body.append(t);}t.textContent=msg;t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),3000);}
 let _fontSampleT=null;
@@ -2403,7 +2630,7 @@ document.getElementById('canvasModal').onclick=e=>{if(e.target.id==='canvasModal
   const op=document.getElementById('bOpacity');op.oninput=()=>{applyStyle('opacity',+op.value,false);document.getElementById('bOpacityV').textContent=Math.round(op.value*100)+'%';};op.onchange=()=>applyStyle('opacity',+op.value,true);})();
 
 //////////////////// INIT ////////////////////
-function init(){buildStage();buildTools();buildMenus();buildPanels();setToolUI();loadSession();}
+function init(){seedLibraryDefaults();buildStage();buildTools();buildMenus();buildPanels();setToolUI();loadSession();}
 function seedDemoInto(st){const bg=luid(),ct=luid();
   st.layers=[{id:bg,name:'Background',visible:true,locked:false},{id:ct,name:'Content',visible:true,locked:false}];
   st.activeLayer=ct;
