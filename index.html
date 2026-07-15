@@ -554,9 +554,14 @@
   .exfmt.sel .exfmt-name{color:#fff;}
   .ex-desc{padding:2px 18px 10px;color:var(--muted);font-size:11px;line-height:1.4;text-align:center;min-height:30px;}
   .exrow{display:flex;align-items:center;gap:8px;padding:5px 16px;}
+  /* settings grouped in an inset panel, like the reference dialog */
+  .ex-group{border:1px solid var(--line2);border-radius:8px;margin:2px 16px 10px;padding:8px 0;background:#00000018;}
+  .ex-group .exrow{padding:5px 12px;}
   .exrow .exlabel{width:110px;text-align:right;color:var(--text);font-size:12px;flex:0 0 auto;}
   .exrow select{width:auto;min-width:120px;}
   .exrow .exnum{width:66px;flex:0 0 auto;}
+  /* .stepper defaults to flex:1 — pin it so the Scale pill doesn't stretch across the row */
+  .exrow .stepper{flex:0 0 74px;}
   .exrow .exsuffix{color:var(--muted);font-size:12px;}
   .exrow .exwh{color:var(--muted);font-size:11px;margin-left:8px;}
   .exquality{flex:1;display:flex;flex-direction:column;gap:2px;}
@@ -572,7 +577,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 187</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 190</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -638,11 +643,13 @@
     <div class="ex-formats" id="exFormats"></div>
     <div class="ex-desc" id="exDesc"></div>
     <div class="modal-body">
-      <div class="exrow"><span class="exlabel">Include:</span><select id="exRegion"><option value="canvas">Entire Canvas</option><option value="all">All Objects</option><option value="selection">Selected Objects</option></select></div>
-      <div class="exrow" id="exScaleRow"><span class="exlabel">Scale:</span><input type="number" id="exScale" class="exnum" min="1" value="100"><span class="exsuffix">%</span><span class="exwh" id="exWH"></span></div>
-      <div class="exrow" id="exDpiRow"><span class="exlabel">Image Resolution:</span><input type="number" id="exDpi" class="exnum" min="1" value="96"><select id="exUnits"><option>pixels / in</option></select></div>
-      <div class="exrow" id="exQualityRow"><span class="exlabel">Quality:</span><div class="exquality"><input type="range" id="exQuality" min="0.1" max="1" step="0.01" value="0.85"><div class="exqlabels"><span>Least</span><span id="exQVal">85%</span><span>Best</span></div></div></div>
-      <div class="exrow" id="exBgRow"><span class="exlabel">Background:</span><select id="exBg"><option value="transparent">Transparent</option><option value="white">White</option></select></div>
+      <div class="ex-group">
+        <div class="exrow"><span class="exlabel">Include:</span><select id="exRegion"><option value="canvas">Entire Canvas</option><option value="all">All Objects</option><option value="selection">Selected Objects</option></select></div>
+        <div class="exrow" id="exScaleRow"><span class="exlabel">Scale:</span><input type="number" id="exScale" class="exnum" min="1" value="100"><span class="exsuffix">%</span><span class="exwh" id="exWH"></span></div>
+        <div class="exrow" id="exImgScaleRow"><span class="exlabel">Image Scale:</span><select id="exImgScale"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
+        <div class="exrow" id="exQualityRow"><span class="exlabel">Quality:</span><div class="exquality"><input type="range" id="exQuality" min="0.1" max="1" step="0.01" value="0.85"><div class="exqlabels"><span>Least</span><span id="exQVal">85%</span><span>Best</span></div></div></div>
+        <div class="exrow" id="exBgRow"><span class="exlabel">Background:</span><select id="exBg"><option value="transparent">Transparent</option><option value="white">White</option></select></div>
+      </div>
     </div>
     <div class="modal-actions"><button id="exCancel">Cancel</button><button id="exGo" class="primary">Save…</button></div>
   </div>
@@ -2221,8 +2228,8 @@ function distribute(axis){const sels=selShapes();if(sels.length<3)return;const k
   pushHistory();render();refreshPanels();}
 let csMode='canvas';
 function artworkBBox(){const list=state.shapes.filter(shapeVisible);if(!list.length)return null;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const s of list){const b=worldBBox(s);x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.w);y1=Math.max(y1,b.y+b.h);}return{x:x0,y:y0,w:x1-x0,h:y1-y0};}
-function openCanvasSize(){csMode='canvas';document.getElementById('csTitle').textContent='Canvas Size';document.getElementById('csHint').textContent='Resize the document — objects stay put.';document.getElementById('csW').value=state.doc.w;document.getElementById('csH').value=state.doc.h;document.getElementById('canvasModal').classList.add('show');}
-function openArtworkSize(){const bb=artworkBBox();if(!bb){alert('There is no artwork to resize.');return;}csMode='artwork';document.getElementById('csTitle').textContent='Artwork Size';document.getElementById('csHint').textContent='Scale all artwork to a new overall size.';document.getElementById('csW').value=Math.round(bb.w);document.getElementById('csH').value=Math.round(bb.h);document.getElementById('canvasModal').classList.add('show');}
+function openCanvasSize(){csMode='canvas';document.getElementById('csTitle').textContent='Canvas Size';document.getElementById('csHint').textContent='Resize the document — objects stay put.';document.getElementById('csW').value=state.doc.w;document.getElementById('csH').value=state.doc.h;document.getElementById('canvasModal').classList.add('show');wrapSteppers(document.getElementById('canvasModal'));}
+function openArtworkSize(){const bb=artworkBBox();if(!bb){alert('There is no artwork to resize.');return;}csMode='artwork';document.getElementById('csTitle').textContent='Artwork Size';document.getElementById('csHint').textContent='Scale all artwork to a new overall size.';document.getElementById('csW').value=Math.round(bb.w);document.getElementById('csH').value=Math.round(bb.h);document.getElementById('canvasModal').classList.add('show');wrapSteppers(document.getElementById('canvasModal'));}
 function closeCanvas(){document.getElementById('canvasModal').classList.remove('show');}
 function applyCanvasSize(){state.doc.w=Math.max(1,Math.round(+document.getElementById('csW').value||1));state.doc.h=Math.max(1,Math.round(+document.getElementById('csH').value||1));pushHistory();render();refreshPanels();zoomFit();closeCanvas();}
 function applyArtworkSize(){const bb=artworkBBox();if(!bb){closeCanvas();return;}const nw=Math.max(1,+document.getElementById('csW').value||1),nh=Math.max(1,+document.getElementById('csH').value||1),sx=nw/bb.w,sy=nh/bb.h;
@@ -2515,11 +2522,6 @@ async function fetchFontFace(fam,w){const key=fam+'|'+w;if(fontEmbedCache[key]!=
   }catch(_){fontEmbedCache[key]='';return '';}}
 async function ensureExportFonts(shapes){const used=usedWebFonts(shapes||state.shapes);const faces=await Promise.all(used.map(u=>fetchFontFace(u.fam,u.w)));_exportFontStyle=faces.filter(Boolean).join('\n');return _exportFontStyle;}
 function appendFontStyle(defs){if(_exportFontStyle){const st=el('style',{type:'text/css'});st.textContent=_exportFontStyle;defs.append(st);}}
-function buildExportSVG(){const svg=el('svg',{xmlns:SVGNS,width:state.doc.w,height:state.doc.h,viewBox:`0 0 ${state.doc.w} ${state.doc.h}`});
-  const defs=el('defs',{});appendFontStyle(defs);for(const g of GRADIENTS){const lg=el('linearGradient',{id:g.id,x1:0,y1:0,x2:0,y2:1});for(const[c,o] of g.stops)lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}svg.append(defs);
-  svg.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'#ffffff'}));
-  for(const s of state.shapes){if(s.visible===false)continue;svg.append(buildShapeEl(s,defs));}
-  return new XMLSerializer().serializeToString(svg);}
 // ---------- PRINT ----------
 const PAPERS={letter:[612,792],a4:[595.28,841.89],legal:[612,1008],tabloid:[792,1224]};
 function openPrintModal(){document.getElementById('printModal').classList.add('show');updatePrintUI();}
@@ -2579,9 +2581,6 @@ async function saveBlob(blob,name){
   }
   download(name,blob);return name;
 }
-async function exportSVG(){await ensureExportFonts(state.shapes);download('graphic.svg',new Blob([buildExportSVG()],{type:'image/svg+xml'}));}
-async function exportPNG(){await ensureExportFonts(state.shapes);const svg=buildExportSVG(),img=new Image(),scale=2,url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
-  img.onload=()=>{const cv=document.createElement('canvas');cv.width=state.doc.w*scale;cv.height=state.doc.h*scale;const ctx=cv.getContext('2d');ctx.scale(scale,scale);ctx.drawImage(img,0,0);cv.toBlob(b=>download('graphic.png',b));};img.onerror=()=>alert('PNG export failed.');img.src=url;}
 // ---- Export dialog (canvas / all / selection -> PNG, JPEG, SVG, PDF) ----
 function regionBBox(region){
   if(region==='canvas')return{x:0,y:0,w:state.doc.w,h:state.doc.h};
@@ -2594,7 +2593,8 @@ function buildExportRegion(region,whiteBg){
   const bb=regionBBox(region);
   const svg=el('svg',{xmlns:SVGNS,width:bb.w,height:bb.h,viewBox:`${bb.x} ${bb.y} ${bb.w} ${bb.h}`});
   const defs=el('defs',{});appendFontStyle(defs);
-  for(const g of allGradients()){const attrs={id:g.id,x1:0,y1:0,x2:0,y2:1};if(g.angle)attrs.gradientTransform='rotate('+g.angle+' 0.5 0.5)';const lg=el('linearGradient',attrs);for(const[c,o] of [...g.stops].sort((p,q)=>p[1]-q[1]))lg.append(el('stop',{offset:o,'stop-color':c}));defs.append(lg);}
+  // same builder the canvas uses, so radial library gradients don't export as linear
+  for(const g of allGradients())appendShapeGrad(defs,g.id,g);
   if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(#docbg')===0&&state.doc.bgGrad)appendShapeGrad(defs,'docbg',state.doc.bgGrad);
   svg.append(defs);
   if(whiteBg)svg.append(el('rect',{x:bb.x,y:bb.y,width:bb.w,height:bb.h,fill:state.doc.bg||'#ffffff'}));
@@ -2619,7 +2619,7 @@ function buildPdf(jpeg,wPx,hPx,dpi){
   return out;
 }
 const EXFORMATS=[{id:'psd',name:'PSD',c:'#2b6cb0',on:false},{id:'pdf',name:'PDF',c:'#e53e3e',on:true},{id:'svg',name:'SVG',c:'#dd6b20',on:true},{id:'png',name:'PNG',c:'#3182ce',on:true},{id:'gif',name:'GIF',c:'#38a169',on:false},{id:'jpeg',name:'JPEG',c:'#805ad5',on:true},{id:'tiff',name:'TIFF',c:'#718096',on:false}];
-const EXDESC={png:'Export as a PNG image — supports transparency, ideal for the web and screens.',jpeg:'Export as a JPEG image that can be viewed and edited by image editing applications, or viewed on the web.',svg:'Export as an SVG vector file that can be imported and edited in other vector illustration applications.',pdf:'Export as a PDF document — vector quality, ideal for printing and sharing.',psd:'',gif:'',tiff:''};
+const EXDESC={png:'Export as a PNG image — supports transparency, ideal for the web and screens.',jpeg:'Export as a JPEG image that can be viewed and edited by image editing applications, or viewed on the web.',svg:'Export as a vector SVG document that can be viewed and edited by other vector illustration applications, or viewed on the web.',pdf:'Export as a PDF document — vector quality, ideal for printing and sharing.',psd:'',gif:'',tiff:''};
 let exFmt='png';
 function buildExFormats(){const box=document.getElementById('exFormats');box.innerHTML='';
   EXFORMATS.forEach(f=>{const t=document.createElement('div');t.className='exfmt'+(f.id===exFmt?' sel':'')+(f.on?'':' disabled');t.dataset.fmt=f.id;
@@ -2627,19 +2627,26 @@ function buildExFormats(){const box=document.getElementById('exFormats');box.inn
     if(f.on)t.onclick=()=>{exFmt=f.id;buildExFormats();updateExportUI();};box.append(t);});}
 function openExportModal(){const hasSel=state.sel.length>0;const reg=document.getElementById('exRegion');
   reg.querySelector('option[value="selection"]').disabled=!hasSel;reg.value=hasSel?'selection':'canvas';
-  buildExFormats();document.getElementById('exportModal').classList.add('show');updateExportUI();}
+  buildExFormats();document.getElementById('exportModal').classList.add('show');
+  wrapSteppers(document.getElementById('exportModal'));   // same cream stepper pills as the panels
+  updateExportUI();}
 function closeExport(){document.getElementById('exportModal').classList.remove('show');}
 function exV(id){return document.getElementById(id).value;}
 function updateExportUI(){const f=exFmt,raster=f!=='svg';
   document.getElementById('exDesc').textContent=EXDESC[f]||'';
-  document.getElementById('exDpiRow').style.display=raster?'':'none';
+  // Image Scale is pixel density — meaningless for vector SVG, so only offer it on raster formats
+  document.getElementById('exImgScaleRow').style.display=raster?'':'none';
   document.getElementById('exQualityRow').style.display=(f==='jpeg'||f==='pdf')?'':'none';
   document.getElementById('exBgRow').style.display=(f==='png'||f==='svg')?'':'none';
-  const eff=(+exV('exScale')||100)/100,bb=regionBBox(exV('exRegion'));
-  document.getElementById('exWH').textContent='w: '+Math.round(bb.w*eff)+' px   h: '+Math.round(bb.h*eff)+' px';
+  const eff=(+exV('exScale')||100)/100,imgScale=raster?(+exV('exImgScale')||1):1,bb=regionBBox(exV('exRegion'));
+  document.getElementById('exWH').textContent='w: '+Math.round(bb.w*eff*imgScale)+' px   h: '+Math.round(bb.h*eff*imgScale)+' px';
   document.getElementById('exQVal').textContent=Math.round(document.getElementById('exQuality').value*100)+'%';}
 async function runExport(){
-  const region=exV('exRegion'),format=exFmt,dpi=+exV('exDpi')||96,eff=(+exV('exScale')||100)/100,quality=+document.getElementById('exQuality').value,bg=exV('exBg');
+  const region=exV('exRegion'),format=exFmt,quality=+document.getElementById('exQuality').value,bg=exV('exBg');
+  // Scale sets the output size; Image Scale multiplies pixel density on top (1x/2x/3x).
+  // PDF keeps its page size by raising dpi in step, so @2x just embeds a denser image.
+  const imgScale=format!=='svg'?(+exV('exImgScale')||1):1;
+  const eff=((+exV('exScale')||100)/100)*imgScale, dpi=72*imgScale;
   const whiteBg=region==='canvas'||format==='jpeg'||format==='pdf'||bg==='white';
   await ensureExportFonts(region==='selection'?selShapes():state.shapes);
   const{svg,w,h}=buildExportRegion(region,whiteBg);
@@ -2737,7 +2744,7 @@ function showAbout(){alert('GrafixAnywhere\nA browser-based vector editor inspir
 document.getElementById('exCancel').onclick=closeExport;
 document.getElementById('exGo').onclick=runExport;
 document.getElementById('exportModal').onclick=e=>{if(e.target.id==='exportModal')closeExport();};
-['exRegion','exScale','exDpi'].forEach(id=>{const el2=document.getElementById(id);if(el2)el2.onchange=updateExportUI;});
+['exRegion','exScale','exImgScale'].forEach(id=>{const el2=document.getElementById(id);if(el2)el2.onchange=updateExportUI;});
 document.getElementById('exScale').oninput=updateExportUI;document.getElementById('exQuality').oninput=updateExportUI;
 document.getElementById('btnZoomIn').onclick=()=>setZoom(state.zoom*1.2);
 document.getElementById('btnZoomOut').onclick=()=>setZoom(state.zoom/1.2);
