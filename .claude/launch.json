@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "graphic",
-      "runtimeExecutable": "powershell",
-      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Claude\\Sessions\\server.ps1"],
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8777", "--directory", "/Users/davidsmith/Documents/Claude/graphicstudio"],
       "port": 8777
     }
   ]
