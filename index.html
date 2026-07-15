@@ -106,7 +106,9 @@
   #stage.tool-hand{cursor:grab;}#stage.panning{cursor:grabbing;}
   #stage.tool-select{cursor:default;}
   #stage.tool-rect,#stage.tool-roundrect,#stage.tool-ellipse,#stage.tool-line,#stage.tool-polygon,#stage.tool-star,#stage.tool-pen,#stage.tool-pencil,#stage.tool-text{cursor:crosshair;}
-  #textEditor{position:absolute;display:none;background:transparent;border:1px solid var(--accent);color:#000;outline:none;resize:none;overflow:hidden;padding:2px 3px;line-height:1.15;transform-origin:0 0;z-index:30;white-space:pre;-webkit-user-select:text;user-select:text;cursor:text;}
+  /* No border/padding in the layout: they'd shrink the usable width (premature wrap) and offset the
+     text — both amplified by any stretch. The accent ring is drawn with box-shadow instead. */
+  #textEditor{position:absolute;display:none;background:transparent;border:none;box-shadow:0 0 0 1px var(--accent);color:#000;outline:none;resize:none;overflow:hidden;padding:0;line-height:1.15;transform-origin:0 0;z-index:30;white-space:pre;-webkit-user-select:text;user-select:text;cursor:text;}
   #cropHint{position:absolute;display:none;left:50%;top:14px;transform:translateX(-50%);background:#000d;color:#fff;padding:7px 12px;border-radius:8px;font-size:12px;z-index:40;box-shadow:0 6px 24px #0007;white-space:nowrap;}
   #cropHint b{color:var(--accent);font-weight:600;}
   #cropHint button{margin:0 3px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;}
@@ -564,7 +566,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 174</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 183</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -773,7 +775,7 @@ function buildStage(){
   vp=el('g',{id:'vp'});gBoard=el('g',{});gContent=el('g',{});gOverlay=el('g',{});
   vp.append(gBoard,gContent,gOverlay);stage.append(gDefs,vp);
 }
-function gradCss(id){const g=allGradients().find(x=>x.id===id);if(!g)return'#000';const st=[...g.stops].sort((p,q)=>p[1]-q[1]).map(s=>s[0]+' '+(s[1]*100)+'%').join(',');if(g.type==='radial')return`radial-gradient(circle at 50% 50%,${st})`;const a=g.angle==null?180:(180-g.angle);return`linear-gradient(${a}deg,${st})`;}
+function gradCss(id){const g=allGradients().find(x=>x.id===id);if(!g)return'#000';const st=[...g.stops].sort((p,q)=>p[1]-q[1]).map(s=>s[0]+' '+(s[1]*100)+'%').join(',');if(g.type==='radial')return`radial-gradient(circle at 50% 50%,${st})`;const a=g.angle==null?180:(180+g.angle);return`linear-gradient(${a}deg,${st})`;}
 function fillCss(c){if(!c||c==='none')return'transparent';if(typeof c==='string'&&c.startsWith('url(')){const id=c.slice(5,-1);return gradCss(id);}return c;}
 // Library thumbnail for a gradient, with its saved opacity baked in (gradCss stays opacity-free:
 // shapes referencing a gradient apply their own fillOpacity, so baking it there would double-count)
@@ -781,7 +783,7 @@ function gradThumbCss(id){const g=allGradients().find(x=>x.id===id);if(!g)return
   const a=g.opacity==null?1:g.opacity;if(a>=1)return gradCss(id);
   const st=[...g.stops].sort((p,q)=>p[1]-q[1]).map(s=>{const c=hexToRgb(s[0]);return 'rgba('+Math.round(c.r)+','+Math.round(c.g)+','+Math.round(c.b)+','+a+') '+(s[1]*100)+'%';}).join(',');
   if(g.type==='radial')return 'radial-gradient(circle at 50% 50%,'+st+')';
-  const ang=g.angle==null?180:(180-g.angle);return 'linear-gradient('+ang+'deg,'+st+')';}
+  const ang=g.angle==null?180:(180+g.angle);return 'linear-gradient('+ang+'deg,'+st+')';}
 // Paint a swatch over a checkerboard so saved opacity is actually visible
 const SW_CHK='linear-gradient(45deg,#9a9a9a 25%,transparent 25%),linear-gradient(-45deg,#9a9a9a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#9a9a9a 75%),linear-gradient(-45deg,transparent 75%,#9a9a9a 75%)';
 function swatchBg(el,css){const isGrad=/gradient\(/.test(css);
@@ -790,7 +792,7 @@ function swatchBg(el,css){const isGrad=/gradient\(/.test(css);
   el.style.backgroundSize='auto,8px 8px,8px 8px,8px 8px,8px 8px';
   el.style.backgroundPosition='0 0,0 0,0 4px,4px -4px,-4px 0';}
 function gradToCss(g){const st=[...(g.stops||[])].sort((a,b)=>a[1]-b[1]).map(s=>s[0]+' '+Math.round(s[1]*100)+'%').join(',');
-  if(g.type==='radial')return 'radial-gradient(circle at 50% 50%,'+st+')';const a=g.angle==null?180:(180-g.angle);return 'linear-gradient('+a+'deg,'+st+')';}
+  if(g.type==='radial')return 'radial-gradient(circle at 50% 50%,'+st+')';const a=g.angle==null?180:(180+g.angle);return 'linear-gradient('+a+'deg,'+st+')';}
 function fillIsGrad(s){return!!(typeof s.fill==='string'&&s.fill.indexOf('url(#fillg_')===0&&s.fillGrad);}
 function fillTypeOf(s){if(fillIsGrad(s))return s.fillGrad.type||'linear';if(typeof s.fill==='string'&&s.fill.startsWith('url('))return 'linear';return 'color';}
 function paintCss(s,which){if(which==='fill'&&fillIsGrad(s))return gradToCss(s.fillGrad);return fillCss(s[which]);}
@@ -866,6 +868,13 @@ function buildGeomEl(s){switch(s.type){
   case 'path':case 'freehand':return el('path',{d:pathD(s)});}}
 function applyStyleTo(e,s){const st=styleAttrs(s);for(const k in st)if(st[k]!=null)e.setAttribute(k,st[k]);}
 let _measCtx=null;
+// Narrowest the box may go before an unbreakable word would spill outside it (and desync the selection box)
+function minBoxWidth(s){if(!_measCtx)_measCtx=document.createElement('canvas').getContext('2d');
+  _measCtx.font=`${s.fontStyle==='italic'?'italic ':''}${s.fontWeight||400} ${s.fontSize}px ${s.fontFamily}`;
+  const ls=s.letterSpacing||0;let mx=20;
+  for(const para of (s.text||'').split('\n'))for(const word of para.split(' ')){
+    const w=_measCtx.measureText(word).width+ls*Math.max(0,word.length-1);if(w>mx)mx=w;}
+  return Math.ceil(mx);}
 function wrapText(s){if(!_measCtx)_measCtx=document.createElement('canvas').getContext('2d');
   _measCtx.font=`${s.fontStyle==='italic'?'italic ':''}${s.fontWeight||400} ${s.fontSize}px ${s.fontFamily}`;
   const bw=s.boxWidth,ls=s.letterSpacing||0,out=[];
@@ -886,7 +895,10 @@ function buildTextEl(s){const align=s.align||'start',anchor=align==='justify'?'s
   const _sx=s.sx||1,_sy=s.sy||1;
   if(_sx!==1||_sy!==1){const bb=shapeBBox(s),cx2=bb.x+bb.w/2,cy2=bb.y+bb.h/2;let M=new DOMMatrix();
     if(s.rot||s.shear||s.shearY){M=M.translate(cx2,cy2);if(s.rot)M=M.rotate(s.rot);if(s.shear)M=M.skewX(s.shear);if(s.shearY)M=M.skewY(s.shearY);M=M.translate(-cx2,-cy2);}
-    M=M.translate(ax,s.y).scale(_sx,_sy).translate(-ax,-s.y);
+    // Scale from the box's left edge for a fixed-width box (shapeBBox assumes the box grows right
+    // from s.x); auto-width text has no box, so it scales about its anchor.
+    const ox=s.boxWidth>0?s.x:ax;
+    M=M.translate(ox,s.y).scale(_sx,_sy).translate(-ox,-s.y);
     e.setAttribute('transform',`matrix(${M.a} ${M.b} ${M.c} ${M.d} ${M.e} ${M.f})`);
   }else{const tr=transformStr(s);if(tr)e.setAttribute('transform',tr);}
   if(s.blend&&s.blend!=='normal')e.style.mixBlendMode=s.blend;return e;}
@@ -983,7 +995,7 @@ function render(){
   gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:state.doc.bg||'#ffffff'}));
   gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'none',stroke:'#00000022','stroke-width':1/state.zoom}));
   gContent.innerHTML='';
-  for(const s of renderOrder()){if(!shapeVisible(s))continue;const e=buildShapeEl(s);e.dataset.id=s.id;e.style.cursor='move';if(editing&&editing.id===s.id)e.style.opacity=0;gContent.append(e);
+  for(const s of renderOrder()){if(!shapeVisible(s))continue;const e=buildShapeEl(s);e.dataset.id=s.id;e.style.cursor='move';gContent.append(e);
     if(s.type==='text'){try{const bb=e.getBBox();if(s.boxWidth>0){s.w=s.boxWidth;s.h=bb.height||s.fontSize*1.2;}else{s.w=bb.width||s.w;s.h=bb.height||s.fontSize*1.2;}if(s.align==='justify')justifyText(e,s.boxWidth>0?s.boxWidth:s.w);}catch(_){}}}
   updateViewport();renderOverlay();updateStatus();
 }
@@ -1279,7 +1291,16 @@ function updateGroupHandle(p,e){const {box,handle,items}=drag,h=handle;
 function updateHandle(p,e){const s=drag.shape;
   if(drag.handle==='rot'){let ang=(Math.atan2(p.y-drag.center.y,p.x-drag.center.x)-drag.startAngle)*180/Math.PI+drag.startRot;if(e.shiftKey)ang=Math.round(ang/15)*15;s.rot=Math.round(ang*10)/10;drag.moved=true;render();updateStatus();return;}
   if(s.type==='line'){const lp=toLocal(p,s);if(drag.handle==='p1'){s.x1=lp.x;s.y1=lp.y;}else{s.x2=lp.x;s.y2=lp.y;}drag.moved=true;render();updateStatus();return;}
-  if(s.type==='text'&&s.boxWidth>0&&(drag.handle==='e'||drag.handle==='w')){const lp=toLocal(p,s);if(drag.handle==='e'){s.boxWidth=Math.max(20,lp.x-s.x);}else{const right=s.x+(s.boxWidth>0?s.boxWidth:s.w);const nx=Math.min(lp.x,right-20);s.boxWidth=right-nx;s.x=nx;}drag.moved=true;render();updateStatus();return;}
+  if(s.type==='text'&&(drag.handle==='e'||drag.handle==='w')){
+    // Side handles set the text box width (giving alignment room to work). Auto-width text becomes a
+    // fixed-width box on first side-drag, in place — its s.x is an anchor, so re-anchor to the left edge.
+    const sxv=s.sx||1,minW=minBoxWidth(s);
+    if(!(s.boxWidth>0)){const b=shapeBBox(s);s.x=b.x;s.boxWidth=Math.max(minW,b.w/sxv);}
+    // boxWidth is in local units but the box renders at boxWidth*sx, so convert the pointer delta by sx
+    const lp=toLocal(p,s);
+    if(drag.handle==='e'){s.boxWidth=Math.max(minW,(lp.x-s.x)/sxv);}
+    else{const right=s.x+s.boxWidth*sxv;const nx=Math.min(lp.x,right-minW*sxv);s.boxWidth=(right-nx)/sxv;s.x=nx;}
+    drag.moved=true;render();updateStatus();return;}
   const lp=toLocal(p,s),b=shapeBBox(s),h=drag.handle;
   const hasW=h.includes('w'),hasE=h.includes('e'),hasN=h.includes('n'),hasS=h.includes('s');
   let nw=b.w,nh=b.h;
@@ -1324,13 +1345,29 @@ function updateCrop(p){const s=drag.shape,lp=toLocal(p,s),h=drag.handle,b=drag.b
   if(nw<4){if(h.indexOf('w')>=0)nx=b.x+b.w-4;nw=4;}
   if(nh<4){if(h.indexOf('n')>=0)ny=b.y+b.h-4;nh=4;}
   s.x=nx;s.y=ny;s.w=nw;s.h=nh;clampCrop(s);drag.moved=true;render();renderOverlay();updateStatus();}
-function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.getBoundingClientRect();const px=m.a*s.x+m.c*s.y+m.e-wr.left,py=m.b*s.x+m.d*s.y+m.f-wr.top;
-  textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color=s.fillOn?s.fill:'#000';textEditor.value=s.text;
-  const e=[...gContent.children].find(c=>c.dataset.id===s.id);if(e)e.style.opacity=0;gOverlay.innerHTML='';autosizeText();textEditor._isNew=isNew;
+function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.getBoundingClientRect();
+  // Position on the block's visual left edge, not s.x — for auto-width text s.x is the anchor, so a
+  // centre/right-aligned block would sit half (or a full) block to the right of the real text.
+  const eb=shapeBBox(s);
+  const px=m.a*eb.x+m.c*eb.y+m.e-wr.left,py=m.b*eb.x+m.d*eb.y+m.f-wr.top;
+  // True edit-in-place: the real SVG text stays visible and updates as you type, and the textarea sits
+  // invisibly on top purely for caret/selection/input. Nothing about the fill is reproduced in CSS, so
+  // gradients (angle, objectBoundingBox squash, radial ellipse), stroke and effects simply can't drift.
+  const ecar=!s.fillOn?'#000':(fillIsGrad(s)&&s.fillGrad&&s.fillGrad.stops&&s.fillGrad.stops[0]?s.fillGrad.stops[0][0]:(typeof s.fill==='string'&&s.fill.startsWith('url(')?'#000':s.fill));
+  textEditor.style.backgroundImage='';textEditor.style.webkitBackgroundClip='';textEditor.style.backgroundClip='';textEditor.style.caretColor=ecar;
+  textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color='transparent';textEditor.value=s.text;
+  // Match any stretch, so the caret/selection track the rendered glyphs instead of an unscaled copy
+  const _esx=s.sx||1,_esy=s.sy||1;textEditor.style.transformOrigin='0 0';textEditor.style.transform=(_esx!==1||_esy!==1)?`scale(${_esx},${_esy})`:'';
+  gOverlay.innerHTML='';autosizeText();textEditor._isNew=isNew;
   // Defer focus to the next tick so the click that created the box can't steal focus and blur it away
   setTimeout(()=>{if(editing===s){textEditor.focus();if(isNew)textEditor.select();else{const n=textEditor.value.length;textEditor.setSelectionRange(n,n);}}},0);}
-function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSpace='pre-wrap';textEditor.style.width=(editing.boxWidth*state.zoom)+'px';textEditor.style.height='auto';textEditor.style.height=textEditor.scrollHeight+'px';}else{textEditor.style.whiteSpace='pre';textEditor.style.height='auto';textEditor.style.height=textEditor.scrollHeight+'px';textEditor.style.width='auto';textEditor.style.width=Math.max(20,textEditor.scrollWidth+4)+'px';}}
-textEditor.addEventListener('input',autosizeText);
+function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSpace='pre-wrap';textEditor.style.width=(editing.boxWidth*state.zoom+1)+'px';textEditor.style.height='auto';textEditor.style.height=textEditor.scrollHeight+'px';}else{textEditor.style.whiteSpace='pre';
+    // width:auto on a textarea is its intrinsic `cols` size, not its content — collapse to 0 first so
+    // scrollWidth reports the real text width, otherwise the box is far wider than the glyphs.
+    textEditor.style.width='0px';textEditor.style.width=Math.max(20,textEditor.scrollWidth+2)+'px';
+    textEditor.style.height='auto';textEditor.style.height=textEditor.scrollHeight+'px';}}
+// The visible text is the real SVG one, so push each keystroke straight into it
+textEditor.addEventListener('input',()=>{if(editing){editing.text=textEditor.value;render();}autosizeText();});
 textEditor.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();commitText();}if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();commitText();}});
 // Don't commit/exit the text when focus moves to a font/size/spacing control — let the user tweak while still editing.
 textEditor.addEventListener('focusout',e=>{const to=e.relatedTarget;if(to&&to.closest&&to.closest('#infobar,#inspPane'))return;commitText();});
@@ -2331,8 +2368,13 @@ function zoomFit(){const wr=wrap.getBoundingClientRect();const sw=wr.width-18,sh
 //////////////////// BOTTOM / STATUS ////////////////////
 function updateBottom(){const s=state.sel.length?selShapes()[0]:null;const bl=document.getElementById('bBlend'),op=document.getElementById('bOpacity'),opv=document.getElementById('bOpacityV');
   const src=s||state.style;bl.value=src.blend||'normal';op.value=src.opacity;opv.textContent=Math.round(src.opacity*100)+'%';}
-function applyText(prop,val,commit){let changed=false;for(const s of selShapes())if(s.type==='text'){s[prop]=val;changed=true;}state.style[prop]=val;
-  if(editing){if(prop==='fontFamily')textEditor.style.fontFamily=val;else if(prop==='fontWeight')textEditor.style.fontWeight=val;else if(prop==='fontSize')textEditor.style.fontSize=(val*state.zoom)+'px';else if(prop==='letterSpacing')textEditor.style.letterSpacing=(val*state.zoom)+'px';else if(prop==='lineHeight')textEditor.style.lineHeight=val;else if(prop==='fontStyle')textEditor.style.fontStyle=val;else if(prop==='underline')textEditor.style.textDecoration=val?'underline':'none';autosizeText();}
+function applyText(prop,val,commit){let changed=false;for(const s of selShapes())if(s.type==='text'){
+    // Auto-width text stores s.x as the text-anchor, so changing align re-interprets it and would
+    // slide the block sideways. Re-anchor so the block stays put and only the lines re-align.
+    if(prop==='align'&&!(s.boxWidth>0)){const b=shapeBBox(s);s.align=val;s.x=b.x+(val==='middle'?b.w/2:val==='end'?b.w:0);}
+    else s[prop]=val;
+    changed=true;}state.style[prop]=val;
+  if(editing){if(prop==='fontFamily')textEditor.style.fontFamily=val;else if(prop==='fontWeight')textEditor.style.fontWeight=val;else if(prop==='fontSize')textEditor.style.fontSize=(val*state.zoom)+'px';else if(prop==='letterSpacing')textEditor.style.letterSpacing=(val*state.zoom)+'px';else if(prop==='lineHeight')textEditor.style.lineHeight=val;else if(prop==='fontStyle')textEditor.style.fontStyle=val;else if(prop==='underline')textEditor.style.textDecoration=val?'underline':'none';else if(prop==='align')textEditor.style.textAlign=(val==='middle'?'center':val==='end'?'right':'left');autosizeText();}
   render();
   if(commit){if(changed)pushHistory();refreshPanels();}}
 function toggleTextStyle(k){const s=curStyle();if(k==='bold')applyText('fontWeight',(parseInt(s.fontWeight||400)>=600?'400':'700'),true);else if(k==='italic')applyText('fontStyle',s.fontStyle==='italic'?'normal':'italic',true);else if(k==='underline')applyText('underline',!s.underline,true);}
