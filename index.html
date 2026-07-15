@@ -566,7 +566,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 183</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 184</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1498,13 +1498,28 @@ function cpGradObj(){const kind=cpTarget||'fill';
 function cpGradSync(commit){const kind=cpTarget||'fill';
   if(kind==='docbg'){render();updateDocBgSwatch();if(commit)pushHistory();return;}
   writeGradBackToLib(curStyle());   // keep the saved swatch in sync with the object's gradient
-  syncFillGrad(commit);updateFSSwatch();}
+  syncFillGrad(commit);updateFSSwatch();
+  if(!commit)refreshInlineGradUI(); // a commit rebuilds the panel via refreshPanels()
+}
 // The object's gradient came from a library swatch -> push edits back so both views show one gradient.
 function writeGradBackToLib(o){const src=o&&o.fillGradSrc;if(!src||!o.fillGrad)return;
   const lib=customGradients.find(x=>x.id===src);if(!lib)return;
   lib.type=o.fillGrad.type||'linear';lib.angle=o.fillGrad.angle||0;lib.stops=o.fillGrad.stops.map(s=>s.slice());
   saveGradients();
   const th=document.querySelector('#stGrads [data-gid="'+src+'"]');if(th)swatchBg(th,gradThumbCss(src));}
+// Popup edits mutate the object's gradient in place, so the Style panel's inline editor shows stale
+// DOM until something rebuilds it. Push the values across live (a commit rebuilds via refreshPanels).
+function refreshInlineGradUI(){const bar=document.getElementById('fgBar');if(!bar)return;
+  const g=curFillGrad();if(!g)return;
+  const hs=[...bar.querySelectorAll('.gstop2')];
+  if(hs.length!==g.stops.length){refreshPanels();return;}   // stop added/removed: rebuild so handlers rebind
+  bar.style.background=gradToCss(g);
+  hs.forEach(h=>{const i=+h.dataset.fgi;if(g.stops[i]){h.style.left=(g.stops[i][1]*100)+'%';h.style.setProperty('--c',g.stops[i][0]);}h.classList.toggle('sel',i===gradSelStop);});
+  const sel=g.stops[gradSelStop]||g.stops[0];
+  const sw=document.getElementById('fgStopSw'),hx=document.getElementById('fgStopHex'),ps=document.getElementById('fgStopPos'),dl=document.getElementById('fgStopDel'),ang=document.getElementById('fgAngle'),dial=document.getElementById('fgDial'),ft=document.getElementById('fillType');
+  if(sw)sw.style.background=sel[0];if(hx)hx.value=toHex(sel[0]);if(ps)ps.value=Math.round(sel[1]*100);if(dl)dl.disabled=g.stops.length<=2;
+  if(ang)ang.value=g.angle||0;if(dial)dial.innerHTML=fgDialSVG(g.angle||0);
+  if(ft&&(g.type==='linear'||g.type==='radial'))ft.value=g.type;}
 // Library editor changed the object's gradient -> re-point the open popup at it and redraw.
 function refreshCPGradFromSel(){if(!cp||cp.style.display!=='block'||cpMode!=='gradient')return;
   const g=curStyle().fillGrad;if(!g)return;
@@ -1516,12 +1531,12 @@ function drawCPBar(){const bar=cp&&cp.querySelector('.cpg-bar');if(!bar||!cpGrad
   bar.innerHTML=cpGrad.stops.map((st,i)=>`<div class="gstop2${i===cpGradStop?' sel':''}" data-cgi="${i}" style="left:${st[1]*100}%;--c:${st[0]}"></div>`).join('');
   bindCPStops();}
 function bindCPStops(){const bar=cp.querySelector('.cpg-bar');if(!bar)return;
-  bar.querySelectorAll('.gstop2').forEach(h=>{h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();cpGradStop=+h.dataset.cgi;loadCPStop();drawCPBar();
+  bar.querySelectorAll('.gstop2').forEach(h=>{h.onpointerdown=e=>{e.preventDefault();e.stopPropagation();cpGradStop=gradSelStop=+h.dataset.cgi;loadCPStop();drawCPBar();
     const r=bar.getBoundingClientRect();let moved=false,sx=e.clientX;
     const move=ev=>{if(!moved&&Math.abs(ev.clientX-sx)<=3)return;moved=true;cpGrad.stops[cpGradStop][1]=Math.round(clamp01((ev.clientX-r.left)/r.width)*1000)/1000;drawCPBar();cpGradSync(false);};
     const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);if(moved)cpGradSync(true);};
     document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};});
-  bar.onpointerdown=e=>{if(e.target!==bar)return;const r=bar.getBoundingClientRect(),p=clamp01((e.clientX-r.left)/r.width),ss=[...cpGrad.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}cpGrad.stops.push([col,Math.round(p*1000)/1000]);cpGradStop=cpGrad.stops.length-1;loadCPStop();drawCPBar();cpGradSync(true);};}
+  bar.onpointerdown=e=>{if(e.target!==bar)return;const r=bar.getBoundingClientRect(),p=clamp01((e.clientX-r.left)/r.width),ss=[...cpGrad.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}cpGrad.stops.push([col,Math.round(p*1000)/1000]);cpGradStop=gradSelStop=cpGrad.stops.length-1;loadCPStop();drawCPBar();cpGradSync(true);};}
 function loadCPStop(){if(!cpGrad||!cpGrad.stops[cpGradStop])return;const c=hexToRgb(cpGrad.stops[cpGradStop][0]),v=rgbToHsv(c.r,c.g,c.b);cpState.h=v.h;cpState.s=v.s;cpState.v=v.v;cpState.a=1;cpApply(true);}
 function drawCPAngle(){if(!cp||!cpGrad)return;const rad=cpGrad.type==='radial',ang=cp.querySelector('.cpgAngle'),dial=cp.querySelector('.cpgDial');
   if(ang){ang.value=cpGrad.angle||0;ang.disabled=rad;}
@@ -1529,7 +1544,7 @@ function drawCPAngle(){if(!cp||!cpGrad)return;const rad=cpGrad.type==='radial',a
 function renderCPGradients(){const box=cp.querySelector('.cp-grad');box.innerHTML='';
   const kind=cpTarget||'fill';
   if(kind==='stroke'){renderCPSavedGrads(box,true);return;}
-  cpGrad=cpGradObj();if(cpGradStop>=cpGrad.stops.length)cpGradStop=0;
+  cpGrad=cpGradObj();cpGradStop=gradSelStop;if(cpGradStop>=cpGrad.stops.length)cpGradStop=gradSelStop=0;
   const ed=document.createElement('div');ed.className='cpg-ed';
   ed.innerHTML=`<div class="cpg-sep"></div>
     <div class="row"><label>Type</label><div class="ctl"><select class="cpgType"><option value="linear">Linear Gradient</option><option value="radial">Radial Gradient</option></select></div></div>
@@ -1553,7 +1568,7 @@ function renderCPSavedGrads(grid,applyOnly){grid.className='cpg-savedgrid';grid.
   const cur=curStyle()[cpTarget||'fill'],curId=(typeof cur==='string'&&cur.startsWith('url('))?cur.slice(5,-1):null;
   for(const g of customGradients){const d=document.createElement('div');d.className='cpg'+(g.id===curId?' sel':'');swatchBg(d,gradThumbCss(g.id));
     if(applyOnly){d.title='Apply · right-click to edit/delete';d.onclick=()=>applyPaintGradient(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Edit gradient…',fn:()=>{closeCP();setTab('styles');editGradient(g.id);}},{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPGradients();}}]);}
-    else{d.title='Load into editor · right-click to delete';d.onclick=()=>{cpGrad.type=g.type||'linear';cpGrad.angle=g.angle||0;cpGrad.stops=g.stops.map(s=>s.slice());cpGradStop=0;cpGradSync(true);renderCPGradients();};d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPGradients();}}]);}
+    else{d.title='Load into editor · right-click to delete';d.onclick=()=>{cpGrad.type=g.type||'linear';cpGrad.angle=g.angle||0;cpGrad.stops=g.stops.map(s=>s.slice());cpGradStop=gradSelStop=0;cpGradSync(true);renderCPGradients();};d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{deleteGradient(g.id);renderCPGradients();}}]);}
     grid.append(d);}
   const add=document.createElement('div');add.className='cpg cpgadd';add.textContent='+';
   if(applyOnly){add.title='Create a new gradient';add.onclick=()=>{closeCP();setTab('styles');newGradient();};}
