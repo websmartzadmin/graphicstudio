@@ -577,7 +577,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 190</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 194</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -646,7 +646,7 @@
       <div class="ex-group">
         <div class="exrow"><span class="exlabel">Include:</span><select id="exRegion"><option value="canvas">Entire Canvas</option><option value="all">All Objects</option><option value="selection">Selected Objects</option></select></div>
         <div class="exrow" id="exScaleRow"><span class="exlabel">Scale:</span><input type="number" id="exScale" class="exnum" min="1" value="100"><span class="exsuffix">%</span><span class="exwh" id="exWH"></span></div>
-        <div class="exrow" id="exImgScaleRow"><span class="exlabel">Image Scale:</span><select id="exImgScale"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
+        <div class="exrow" id="exDpiRow"><span class="exlabel">Image Resolution:</span><input type="number" id="exDpi" class="exnum" min="1" max="2400" step="1" value="96"><select id="exUnits"><option value="in">pixels / in</option><option value="cm">pixels / cm</option></select><span class="exwh" id="exPhys"></span></div>
         <div class="exrow" id="exQualityRow"><span class="exlabel">Quality:</span><div class="exquality"><input type="range" id="exQuality" min="0.1" max="1" step="0.01" value="0.85"><div class="exqlabels"><span>Least</span><span id="exQVal">85%</span><span>Best</span></div></div></div>
         <div class="exrow" id="exBgRow"><span class="exlabel">Background:</span><select id="exBg"><option value="transparent">Transparent</option><option value="white">White</option></select></div>
       </div>
@@ -2603,6 +2603,30 @@ function buildExportRegion(region,whiteBg){
   return{svg:new XMLSerializer().serializeToString(svg),w:bb.w,h:bb.h};
 }
 function downloadBytes(name,bin,type){const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i)&0xff;saveBlob(new Blob([bytes],{type}),name);}
+// Baseline uncompressed TIFF (little-endian, RGB or RGBA). Canvas can't encode TIFF, so write it by
+// hand: header -> pixel strip -> IFD -> external values. Tags must be in ascending order.
+function buildTiff(rgba,w,h,dpi,hasAlpha){
+  const spp=hasAlpha?4:3, pixBytes=w*h*spp, nTags=hasAlpha?14:13;
+  const ifdOff=8+pixBytes, ifdSize=2+nTags*12+4, extOff=ifdOff+ifdSize;
+  const bpsOff=extOff, xresOff=bpsOff+spp*2, yresOff=xresOff+8, total=yresOff+8;
+  const buf=new ArrayBuffer(total), dv=new DataView(buf), u8=new Uint8Array(buf), LE=true;
+  u8[0]=0x49;u8[1]=0x49;dv.setUint16(2,42,LE);dv.setUint32(4,ifdOff,LE);   // 'II', 42, first IFD
+  let p=8;
+  for(let i=0,n=w*h;i<n;i++){const o=i*4;u8[p++]=rgba[o];u8[p++]=rgba[o+1];u8[p++]=rgba[o+2];if(hasAlpha)u8[p++]=rgba[o+3];}
+  let e=ifdOff;dv.setUint16(e,nTags,LE);e+=2;
+  const tag=(t,type,count,val)=>{dv.setUint16(e,t,LE);dv.setUint16(e+2,type,LE);dv.setUint32(e+4,count,LE);
+    if(type===3&&count===1)dv.setUint16(e+8,val,LE);else dv.setUint32(e+8,val,LE);e+=12;};
+  tag(256,4,1,w);tag(257,4,1,h);tag(258,3,spp,bpsOff);tag(259,3,1,1);tag(262,3,1,2);
+  tag(273,4,1,8);tag(277,3,1,spp);tag(278,4,1,h);tag(279,4,1,pixBytes);
+  tag(282,5,1,xresOff);tag(283,5,1,yresOff);tag(284,3,1,1);tag(296,3,1,2);
+  if(hasAlpha)tag(338,3,1,2);                                              // unassociated alpha
+  dv.setUint32(e,0,LE);                                                    // no next IFD
+  for(let i=0;i<spp;i++)dv.setUint16(bpsOff+i*2,8,LE);
+  const r=Math.max(1,Math.round(dpi));
+  dv.setUint32(xresOff,r,LE);dv.setUint32(xresOff+4,1,LE);
+  dv.setUint32(yresOff,r,LE);dv.setUint32(yresOff+4,1,LE);
+  return buf;
+}
 function buildPdf(jpeg,wPx,hPx,dpi){
   dpi=dpi||72;const w=+(wPx*72/dpi).toFixed(2),h=+(hPx*72/dpi).toFixed(2);
   let out='%PDF-1.3\n';const off=[];
@@ -2618,8 +2642,8 @@ function buildPdf(jpeg,wPx,hPx,dpi){
   out+='trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n'+xref+'\n%%EOF';
   return out;
 }
-const EXFORMATS=[{id:'psd',name:'PSD',c:'#2b6cb0',on:false},{id:'pdf',name:'PDF',c:'#e53e3e',on:true},{id:'svg',name:'SVG',c:'#dd6b20',on:true},{id:'png',name:'PNG',c:'#3182ce',on:true},{id:'gif',name:'GIF',c:'#38a169',on:false},{id:'jpeg',name:'JPEG',c:'#805ad5',on:true},{id:'tiff',name:'TIFF',c:'#718096',on:false}];
-const EXDESC={png:'Export as a PNG image — supports transparency, ideal for the web and screens.',jpeg:'Export as a JPEG image that can be viewed and edited by image editing applications, or viewed on the web.',svg:'Export as a vector SVG document that can be viewed and edited by other vector illustration applications, or viewed on the web.',pdf:'Export as a PDF document — vector quality, ideal for printing and sharing.',psd:'',gif:'',tiff:''};
+const EXFORMATS=[{id:'psd',name:'PSD',c:'#2b6cb0',on:false},{id:'pdf',name:'PDF',c:'#e53e3e',on:true},{id:'svg',name:'SVG',c:'#dd6b20',on:true},{id:'png',name:'PNG',c:'#3182ce',on:true},{id:'gif',name:'GIF',c:'#38a169',on:false},{id:'jpeg',name:'JPEG',c:'#805ad5',on:true},{id:'tiff',name:'TIFF',c:'#718096',on:true}];
+const EXDESC={png:'Export as a PNG image — supports transparency, ideal for the web and screens.',jpeg:'Export as a JPEG image that can be viewed and edited by image editing applications, or viewed on the web.',svg:'Export as a vector SVG document that can be viewed and edited by other vector illustration applications, or viewed on the web.',pdf:'Export as a PDF document — vector quality, ideal for printing and sharing.',psd:'',gif:'',tiff:'Export as an uncompressed TIFF image — lossless with full resolution and transparency, ideal for print workflows.'};
 let exFmt='png';
 function buildExFormats(){const box=document.getElementById('exFormats');box.innerHTML='';
   EXFORMATS.forEach(f=>{const t=document.createElement('div');t.className='exfmt'+(f.id===exFmt?' sel':'')+(f.on?'':' disabled');t.dataset.fmt=f.id;
@@ -2634,27 +2658,43 @@ function closeExport(){document.getElementById('exportModal').classList.remove('
 function exV(id){return document.getElementById(id).value;}
 function updateExportUI(){const f=exFmt,raster=f!=='svg';
   document.getElementById('exDesc').textContent=EXDESC[f]||'';
-  // Image Scale is pixel density — meaningless for vector SVG, so only offer it on raster formats
-  document.getElementById('exImgScaleRow').style.display=raster?'':'none';
+  // Resolution is pixel density — meaningless for vector SVG, so only offer it on raster formats
+  document.getElementById('exDpiRow').style.display=raster?'':'none';
   document.getElementById('exQualityRow').style.display=(f==='jpeg'||f==='pdf')?'':'none';
-  document.getElementById('exBgRow').style.display=(f==='png'||f==='svg')?'':'none';
-  const eff=(+exV('exScale')||100)/100,imgScale=raster?(+exV('exImgScale')||1):1,bb=regionBBox(exV('exRegion'));
-  document.getElementById('exWH').textContent='w: '+Math.round(bb.w*eff*imgScale)+' px   h: '+Math.round(bb.h*eff*imgScale)+' px';
+  document.getElementById('exBgRow').style.display=(f==='png'||f==='svg'||f==='tiff')?'':'none';
+  const bb=regionBBox(exV('exRegion'));
+  const eff=exEffScale(f),wPx=Math.round(bb.w*eff),hPx=Math.round(bb.h*eff);
+  document.getElementById('exWH').textContent='w: '+wPx+' px   h: '+hPx+' px';
+  // physical size is fixed by the document (px are 96 DPI) — resolution only changes pixel density
+  const phys=document.getElementById('exPhys'),sc=(+exV('exScale')||100)/100;
+  phys.textContent=raster?(( bb.w*sc/96).toFixed(2)+' x '+(bb.h*sc/96).toFixed(2)+' in'):'';
+  const tooBig=exTooBig(wPx,hPx);
+  document.getElementById('exGo').disabled=!!tooBig;
+  document.getElementById('exDesc').textContent=tooBig?tooBig:(EXDESC[f]||'');
   document.getElementById('exQVal').textContent=Math.round(document.getElementById('exQuality').value*100)+'%';}
+// resolution in real DPI, whichever units the user picked
+function exDpiValue(){const v=+exV('exDpi')||96;return exV('exUnits')==='cm'?v*2.54:v;}
+// document px are 96 DPI, so R dpi means R/96 pixels per document px
+function exEffScale(f){const dpi=(f!=='svg')?exDpiValue():96;return ((+exV('exScale')||100)/100)*(dpi/96);}
+// browsers cap canvas size/area — catch it before we hand the user a blank file
+function exTooBig(w,h){if(w>16384||h>16384)return 'That resolution is too large ('+w+'x'+h+' px). Max 16384 px per side — lower the resolution or scale.';
+  if(w*h>1.2e8)return 'That resolution is too large ('+w+'x'+h+' px). Lower the resolution or scale.';return '';}
 async function runExport(){
   const region=exV('exRegion'),format=exFmt,quality=+document.getElementById('exQuality').value,bg=exV('exBg');
-  // Scale sets the output size; Image Scale multiplies pixel density on top (1x/2x/3x).
-  // PDF keeps its page size by raising dpi in step, so @2x just embeds a denser image.
-  const imgScale=format!=='svg'?(+exV('exImgScale')||1):1;
-  const eff=((+exV('exScale')||100)/100)*imgScale, dpi=72*imgScale;
+  // Document px are 96 DPI (the basis doPrint uses: doc.w*72/96). Resolution sets pixel density for
+  // the whole document, so the PDF page keeps its real physical size and only gets denser.
+  const dpi=format!=='svg'?exDpiValue():96, eff=exEffScale(format);
   const whiteBg=region==='canvas'||format==='jpeg'||format==='pdf'||bg==='white';
   await ensureExportFonts(region==='selection'?selShapes():state.shapes);
   const{svg,w,h}=buildExportRegion(region,whiteBg);
   if(format==='svg'){saveBlob(new Blob([svg],{type:'image/svg+xml'}),'graphic.svg');closeExport();return;}
+  const tooBig=exTooBig(Math.round(w*eff),Math.round(h*eff));
+  if(tooBig){alert(tooBig);return;}
   const img=new Image();
   img.onload=()=>{const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(w*eff));cv.height=Math.max(1,Math.round(h*eff));const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);
     if(format==='png')cv.toBlob(b=>saveBlob(b,'graphic.png'),'image/png');
     else if(format==='jpeg')cv.toBlob(b=>saveBlob(b,'graphic.jpg'),'image/jpeg',quality);
+    else if(format==='tiff'){const id2=ctx.getImageData(0,0,cv.width,cv.height);saveBlob(new Blob([buildTiff(id2.data,cv.width,cv.height,dpi,!whiteBg)],{type:'image/tiff'}),'graphic.tif');}
     else if(format==='pdf'){const durl=cv.toDataURL('image/jpeg',quality);downloadBytes('graphic.pdf',buildPdf(atob(durl.split(',')[1]),cv.width,cv.height,dpi),'application/pdf');}
     closeExport();};
   img.onerror=()=>{alert('Export failed.');};
@@ -2744,8 +2784,8 @@ function showAbout(){alert('GrafixAnywhere\nA browser-based vector editor inspir
 document.getElementById('exCancel').onclick=closeExport;
 document.getElementById('exGo').onclick=runExport;
 document.getElementById('exportModal').onclick=e=>{if(e.target.id==='exportModal')closeExport();};
-['exRegion','exScale','exImgScale'].forEach(id=>{const el2=document.getElementById(id);if(el2)el2.onchange=updateExportUI;});
-document.getElementById('exScale').oninput=updateExportUI;document.getElementById('exQuality').oninput=updateExportUI;
+['exRegion','exScale','exDpi'].forEach(id=>{const el2=document.getElementById(id);if(el2)el2.onchange=updateExportUI;});
+document.getElementById('exScale').oninput=updateExportUI;document.getElementById('exDpi').oninput=updateExportUI;document.getElementById('exQuality').oninput=updateExportUI;
 document.getElementById('btnZoomIn').onclick=()=>setZoom(state.zoom*1.2);
 document.getElementById('btnZoomOut').onclick=()=>setZoom(state.zoom/1.2);
 document.getElementById('btnZoomFit').onclick=zoomFit;
