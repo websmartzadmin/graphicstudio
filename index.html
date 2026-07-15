@@ -275,7 +275,7 @@
   .geDel:disabled{opacity:.35;cursor:default;}
   .row .ctl .stepper:has(.gePos){flex:0 0 50px;}
   .row .ctl .stepper:has(.geAngle){flex:0 0 auto;}
-  .gradEdActions .geDelG{color:var(--danger);}
+  .gradEdActions .geDelG,.gradEdActions .ceDelC{color:var(--danger);}
   .graddial:active{cursor:grabbing;}
   .libtargetrow{display:flex;align-items:center;gap:8px;padding:8px 12px 2px;}
   .libtargetlbl{font-size:11px;color:var(--muted);}
@@ -337,6 +337,9 @@
   .styles-grid .st{height:34px;border-radius:6px;border:1px solid var(--line2);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
   .styles-grid .st:hover{outline:2px solid var(--accent);outline-offset:1px;}
   .styles-grid .st.stadd{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;background:var(--panel2);border-style:dashed;}
+  /* pinned "no paint" swatch — an absence, so it isn't editable or deletable like a real swatch */
+  .styles-grid .st.stnone{background:#fff;position:relative;overflow:hidden;}
+  .styles-grid .st.stnone::after{content:'';position:absolute;left:-25%;right:-25%;top:calc(50% - 1px);height:2px;background:var(--danger);transform:rotate(-45deg);}
   .styles-grid .st.editing{outline:2px solid var(--accent);outline-offset:1px;}
   .gradEditor{margin:0;padding:4px 0 10px;border:0;border-bottom:1px solid var(--line2);border-radius:0;background:#00000018;}
   .gradEdTitle{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:2px 0 6px;padding:0 12px;font-weight:600;}
@@ -460,6 +463,9 @@
   .cp-fields .stepper input[type=number]{padding:2px 4px!important;font-size:11px;text-align:center;}
   .cp-fields .stepbtns button{padding:0 3px;}
   .cp-modes{display:flex;margin-bottom:14px;border:1px solid var(--line2);border-radius:7px;overflow:hidden;}
+  /* picking one specific colour: no mode tabs, just the eyedropper */
+  .cp-modes.eyeonly{border:none;justify-content:flex-end;margin-bottom:8px;}
+  .cp-modes.eyeonly .cp-eyedrop{flex:0 0 32px;width:32px;height:26px;border:1px solid var(--line2);border-radius:6px;background:var(--panel2);}
   .cp-modes button{flex:1;background:var(--panel2);border:none;color:var(--muted);padding:8px 0;font-size:11px;cursor:pointer;}
   .cp-modes button.on{background:var(--accent);color:#fff;}
   .cp-modes .cp-eyedrop{flex:0 0 38px;width:38px;height:auto;padding:0;border:none;border-left:1px solid var(--line2);border-radius:0;background:var(--panel2);color:var(--muted);}
@@ -566,7 +572,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 184</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 187</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -762,7 +768,9 @@ function seedLibraryDefaults(){if(localStorage.getItem('gs-lib-seeded'))return;
   customGradients=customGradients.concat(GRADIENTS.map(g=>({id:'cg'+(uidc++),type:g.type||'linear',angle:g.angle||0,stops:g.stops.map(s=>s.slice())})));
   saveSwatches();saveGradients();localStorage.setItem('gs-lib-seeded','1');}
 function allGradients(){return[...GRADIENTS,...customGradients];}
-let gradEditId=null,gradSelStop=0;
+let gradEditId=null,gradSelStop=0,colorEditIdx=null;
+// darker shade of a colour, used to seed a gradient when converting a swatch
+function shadeOf(hex,f){const c=hexToRgb(hex);return rgbToHex(c.r*(f==null?0.45:f),c.g*(f==null?0.45:f),c.b*(f==null?0.45:f));}
 
 const stage=document.getElementById('stage');
 const wrap=document.getElementById('canvasWrap');
@@ -1457,8 +1465,13 @@ function cpApply(silent){const{h,s,v,a}=cpState,rgb=hsvToRgb(h,s,v),hex=rgbToHex
   if(silent)return;
   if(cpMode==='gradient'&&cpGrad&&cpGrad.stops[cpGradStop]){cpGrad.stops[cpGradStop][0]=hex;drawCPBar();cpGradSync(false);}
   else if(cpInput)cpInput(hex,a);}
-function openColorPicker(anchor,hex,alpha,onInput,onCommit){ensureCP();cpAnchor=anchor&&anchor.getBoundingClientRect?anchor.getBoundingClientRect():null;cpGrad=null;const c=hexToRgb(hex),v=rgbToHsv(c.r,c.g,c.b);cpState={h:v.h,s:v.s,v:v.v,a:alpha==null?1:alpha};cpInput=onInput;cpCommit=onCommit;cp.style.display='block';
-  const mt=cp.querySelector('.cp-modes');if(mt)mt.style.display='';setCPMode('color');
+// opts.noModes: opened to pick one specific colour (a gradient stop, a library swatch) rather than to
+// choose a paint type — hide the Color/Gradient/Custom tabs and leave just the wheel + eyedropper.
+function openColorPicker(anchor,hex,alpha,onInput,onCommit,opts){ensureCP();cpAnchor=anchor&&anchor.getBoundingClientRect?anchor.getBoundingClientRect():null;cpGrad=null;const c=hexToRgb(hex),v=rgbToHsv(c.r,c.g,c.b);cpState={h:v.h,s:v.s,v:v.v,a:alpha==null?1:alpha};cpInput=onInput;cpCommit=onCommit;cp.style.display='block';
+  const noModes=!!(opts&&opts.noModes);
+  const mt=cp.querySelector('.cp-modes');if(mt){mt.style.display='';mt.classList.toggle('eyeonly',noModes);}
+  cp.querySelectorAll('[data-cpm]').forEach(b=>b.style.display=noModes?'none':'');
+  setCPMode('color');
   cpReposition();cpApply();}
 function closeCP(){if(cp&&cp.style.display==='block'){cp.style.display='none';const cb=cpCommit;cpInput=null;cpCommit=null;if(cb)cb();}}
 document.addEventListener('pointerdown',e=>{if(cp&&cp.style.display==='block'&&!cp.contains(e.target)&&!e.target.closest('.ctxmenu')&&!e.target.closest('#swFill,#swStroke,[data-attrsw]'))closeCP();},true);
@@ -1880,7 +1893,7 @@ function fillAppearance(box){const s=curStyle();
     const move=ev=>{if(!moved&&Math.abs(ev.clientX-sx)<=3)return;moved=true;g.stops[gradSelStop][1]=Math.round(clamp01((ev.clientX-r.left)/r.width)*1000)/1000;fgSyncUI();render();};
     const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
       if(moved)syncFillGrad(true);
-      else openColorPicker(sw||h,toHex(g.stops[gradSelStop][0]),1,hex=>{g.stops[gradSelStop][0]=hex;fgSyncUI();render();},()=>syncFillGrad(true));};
+      else openColorPicker(sw||h,toHex(g.stops[gradSelStop][0]),1,hex=>{g.stops[gradSelStop][0]=hex;fgSyncUI();render();},()=>syncFillGrad(true),{noModes:true});};
     document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};});}
   if(fgBar){bindStopEls();
     const addAt=cx=>{const r=fgBar.getBoundingClientRect(),p=clamp01((cx-r.left)/r.width),g=curFillGrad(),ss=[...g.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}g.stops.push([col,Math.round(p*1000)/1000]);gradSelStop=g.stops.length-1;syncFillGrad(true);};
@@ -1895,7 +1908,7 @@ function fillAppearance(box){const s=curStyle();
   const fgFlip=box.querySelector('#fgFlip');if(fgFlip)fgFlip.onclick=()=>{const g=curFillGrad();g.stops=g.stops.map(st=>[st[0],Math.round((1-st[1])*1000)/1000]);syncFillGrad(true);};
   const fgSaveLib=box.querySelector('#fgSaveLib');if(fgSaveLib)fgSaveLib.onclick=()=>{const g=curFillGrad();if(!g)return;const st=curStyle(),id=newGradId();customGradients.push({id,type:g.type||'linear',angle:g.angle||0,stops:g.stops.map(x=>x.slice()),opacity:st.fillOpacity==null?1:st.fillOpacity});saveGradients();render();toast('Gradient added to Library');refreshPanels();};
   const fgSaveColorLib=box.querySelector('#fgSaveColorLib');if(fgSaveColorLib)fgSaveColorLib.onclick=()=>{const st=curStyle(),c=withAlpha(toHex(st.fill),st.fillOpacity==null?1:st.fillOpacity);if(c&&!customSwatches.includes(c)){customSwatches.push(c);saveSwatches();toast('Color added to Library');}else toast('Color already in Library');refreshPanels();};
-  const fgStopSw=box.querySelector('#fgStopSw');if(fgStopSw)fgStopSw.onclick=()=>openColorPicker(fgStopSw,toHex((curFillGrad().stops[gradSelStop]||curFillGrad().stops[0])[0]),1,hex=>{curFillGrad().stops[gradSelStop][0]=hex;fgSyncUI();render();},()=>syncFillGrad(true));
+  const fgStopSw=box.querySelector('#fgStopSw');if(fgStopSw)fgStopSw.onclick=()=>openColorPicker(fgStopSw,toHex((curFillGrad().stops[gradSelStop]||curFillGrad().stops[0])[0]),1,hex=>{curFillGrad().stops[gradSelStop][0]=hex;fgSyncUI();render();},()=>syncFillGrad(true),{noModes:true});
   const fgStopHex=box.querySelector('#fgStopHex');if(fgStopHex)fgStopHex.onchange=()=>{curFillGrad().stops[gradSelStop][0]=toHex(fgStopHex.value);syncFillGrad(true);};
   const fgStopPos=box.querySelector('#fgStopPos');if(fgStopPos)fgStopPos.onchange=()=>{curFillGrad().stops[gradSelStop][1]=clamp01((+fgStopPos.value)/100);syncFillGrad(true);};
   const fgStopDel=box.querySelector('#fgStopDel');if(fgStopDel)fgStopDel.onclick=()=>{const g=curFillGrad();if(g.stops.length>2){g.stops.splice(gradSelStop,1);gradSelStop=Math.max(0,gradSelStop-1);syncFillGrad(true);}};
@@ -1957,12 +1970,48 @@ function newGradient(){const src=customGradients.find(x=>x.id===gradEditId);cons
 function editGradient(id){gradEditId=id;gradSelStop=0;refreshPanels();}
 function deleteGradient(id){customGradients=customGradients.filter(x=>x.id!==id);if(gradEditId===id)gradEditId=null;saveGradients();render();refreshPanels();}
 function closeGradEditor(cancel){const g=customGradients.find(x=>x.id===gradEditId);if(g){if(cancel&&g._new){customGradients=customGradients.filter(x=>x.id!==gradEditId);}else{delete g._new;}saveGradients();}gradEditId=null;render();refreshPanels();}
+// Inline Library editor for a solid swatch — same rows/positions as renderGradEditor so the two match.
+// Switching Type to a gradient converts the swatch and moves it into Custom Gradients.
+function renderColorEditor(box,i){
+  const cur=()=>customSwatches[i];
+  const ed=document.createElement('div');ed.className='gradEditor';
+  const hex=swHex(cur()),a=swAlpha(cur());
+  ed.innerHTML=`<div class="gradEdTitle">Edit Color</div>
+    <div class="row"><label>Type</label><div class="ctl"><select class="ceType"><option value="color" selected>Color</option><option value="linear">Linear Gradient</option><option value="radial">Radial Gradient</option></select></div></div>
+    <div class="row stoprow"><label>Color</label><div class="ctl"><span class="gstopsw geSw ceSw" style="background:${hex}"></span><input class="hexin geHex ceHex" spellcheck="false" value="${hex}"></div></div>
+    <div class="row paintrow"><label>Opacity</label><div class="ctl"><input type="range" class="geOpacity ceOpacity" min="0" max="1" step="0.01" value="${a}"><span class="fxval ceOpVal">${Math.round(a*100)}%</span><button class="ceDone fgsavelib">Done</button></div></div>
+    <div class="gradEdActions"><button class="ceDelC">Delete color</button></div>`;
+  box.prepend(ed);
+  const q=s=>ed.querySelector(s);
+  const write=(h,al)=>{customSwatches[i]=withAlpha(toHex(h),al);
+    q('.ceSw').style.background=toHex(h);q('.ceHex').value=toHex(h);
+    q('.ceOpacity').value=al;q('.ceOpVal').textContent=Math.round(al*100)+'%';
+    const th=document.querySelector('#stCustom .st[data-si="'+i+'"]');if(th)swatchBg(th,fillCss(customSwatches[i]));
+    applyStyle(libTarget,toHex(h),false);applyStyle(libTarget+'Opacity',al,false);
+    if(libTarget==='fill')for(const o of styleTargets())o.fillSolid=toHex(h);
+    updateFSSwatch();};
+  const commit=()=>{saveSwatches();if(state.sel.length)pushHistory();};
+  // the wheel stays a popup, exactly like a gradient stop
+  q('.ceSw').onclick=()=>openColorPicker(q('.ceSw'),swHex(cur()),swAlpha(cur()),
+    (h,al)=>write(h,al),()=>{commit();refreshPanels();},{noModes:true});
+  q('.ceHex').onchange=e=>{write(toHex(e.target.value),swAlpha(cur()));commit();};
+  const op=q('.ceOpacity');op.oninput=()=>write(swHex(cur()),+op.value);op.onchange=()=>commit();
+  q('.ceDone').onclick=()=>{colorEditIdx=null;refreshPanels();};
+  q('.ceDelC').onclick=()=>{customSwatches.splice(i,1);saveSwatches();colorEditIdx=null;refreshPanels();};
+  q('.ceType').onchange=e=>{const v=e.target.value;if(v==='color')return;
+    const col=swHex(cur()),al=swAlpha(cur());
+    customSwatches.splice(i,1);saveSwatches();
+    const id=newGradId();
+    customGradients.push({id,type:v,angle:0,stops:[[col,0],[shadeOf(col),1]],opacity:al});
+    saveGradients();
+    colorEditIdx=null;gradSelStop=0;applyAndEditGrad(id);};
+}
 function renderGradEditor(box,g){
   if(gradSelStop>=g.stops.length)gradSelStop=0;
   const ed=document.createElement('div');ed.className='gradEditor';
   const sel=()=>g.stops[gradSelStop]||g.stops[0];
   ed.innerHTML=`<div class="gradEdTitle">Edit Gradient</div>
-    <div class="row"><label>Type</label><div class="ctl"><select class="geType"><option value="linear"${(g.type||'linear')==='linear'?' selected':''}>Linear Gradient</option><option value="radial"${g.type==='radial'?' selected':''}>Radial Gradient</option></select></div></div>
+    <div class="row"><label>Type</label><div class="ctl"><select class="geType"><option value="color">Color</option><option value="linear"${(g.type||'linear')==='linear'?' selected':''}>Linear Gradient</option><option value="radial"${g.type==='radial'?' selected':''}>Radial Gradient</option></select></div></div>
     <div class="row"><label>Angle</label><div class="ctl"><input type="number" class="geAngle" value="${g.angle||0}" step="1"${g.type==='radial'?' disabled':''}><span style="color:var(--muted)">°</span><span class="graddial geDial"${g.type==='radial'?' style="visibility:hidden"':''} title="Drag to set gradient angle">${fgDialSVG(g.angle||0)}</span><button class="fgflip geFlip" title="Reverse gradient">⇄</button></div></div>
     <div class="gbar geBar"></div>
     <div class="gradHint">Click a stop to edit its color · drag to move · click empty bar to add a stop</div>
@@ -1982,7 +2031,7 @@ function renderGradEditor(box,g){
     const up=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);commit();};
     document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};});}
   q('.geBar').onpointerdown=e=>{if(e.target!==q('.geBar'))return;const r=q('.geBar').getBoundingClientRect(),p=clamp01((e.clientX-r.left)/r.width),ss=[...g.stops].sort((a,b)=>a[1]-b[1]);let col=ss[ss.length-1][0];for(let i=0;i<ss.length-1;i++)if(p>=ss[i][1]&&p<=ss[i+1][1]){col=ss[i][0];break;}g.stops.push([col,Math.round(p*1000)/1000]);gradSelStop=g.stops.length-1;commit();redraw();};
-  q('.geSw').onclick=()=>openColorPicker(q('.geSw'),toHex(sel()[0]),1,hex=>{g.stops[gradSelStop][0]=hex;drawBar();drawStop();liveSync();},()=>commit());
+  q('.geSw').onclick=()=>openColorPicker(q('.geSw'),toHex(sel()[0]),1,hex=>{g.stops[gradSelStop][0]=hex;drawBar();drawStop();liveSync();},()=>commit(),{noModes:true});
   q('.geHex').onchange=e=>{g.stops[gradSelStop][0]=toHex(e.target.value);drawBar();drawStop();commit();};
   q('.gePos').oninput=e=>{g.stops[gradSelStop][1]=clamp01((+e.target.value)/100);drawBar();liveSync();};
   q('.gePos').onchange=()=>commit();
@@ -1994,7 +2043,14 @@ function renderGradEditor(box,g){
     move(e);document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);};
   q('.geFlip').onclick=()=>{g.stops=g.stops.map(st=>[st[0],Math.round((1-st[1])*1000)/1000]);commit();redraw();};
   const gop=q('.geOpacity');gop.oninput=()=>{g.opacity=+gop.value;q('.geOpVal').textContent=Math.round(g.opacity*100)+'%';liveSync();};gop.onchange=()=>commit();
-  q('.geType').onchange=e=>{g.type=e.target.value;ang.disabled=(g.type==='radial');q('.geDial').style.visibility=(g.type==='radial')?'hidden':'';q('.geBar').style.background=gradToCss(g);commit();};
+  q('.geType').onchange=e=>{const v=e.target.value;
+    if(v==='color'){ // convert this gradient into a solid swatch, seeded from its first stop
+      const col=withAlpha(toHex(g.stops[0][0]),g.opacity==null?1:g.opacity);
+      customGradients=customGradients.filter(x=>x.id!==g.id);saveGradients();
+      if(!customSwatches.includes(col))customSwatches.push(col);
+      saveSwatches();gradEditId=null;colorEditIdx=customSwatches.indexOf(col);
+      applyLibColor(col);return;}
+    g.type=v;ang.disabled=(g.type==='radial');q('.geDial').style.visibility=(g.type==='radial')?'hidden':'';q('.geBar').style.background=gradToCss(g);commit();};
   q('.geDone').onclick=()=>{delete g._new;saveGradients();gradEditId=null;render();refreshPanels();};
   q('.geDelG').onclick=()=>deleteGradient(g.id);
   redraw();
@@ -2002,24 +2058,30 @@ function renderGradEditor(box,g){
 function applyLibColor(c){const hex=swHex(c);applyStyle(libTarget,hex,false);applyStyle(libTarget+'Opacity',swAlpha(c),false);if(libTarget==='fill')for(const o of styleTargets())o.fillSolid=hex;if(libTarget==='stroke'){for(const o of styleTargets())if(!(o.strokeWidth>0))o.strokeWidth=1;if(!(state.style.strokeWidth>0))state.style.strokeWidth=1;}applyStyle(libTarget+'On',true,true);}
 function applyLibGrad(id){if(libTarget==='stroke'){for(const o of styleTargets()){o.stroke='url(#'+id+')';o.strokeOn=true;if(!(o.strokeWidth>0))o.strokeWidth=1;}state.style.stroke='url(#'+id+')';state.style.strokeOn=true;if(!(state.style.strokeWidth>0))state.style.strokeWidth=1;if(state.sel.length)render();pushHistory();updateFSSwatch();refreshPanels();}else applyLibGradToFill(id);}
 // Library click: apply the gradient to the selection AND open its editor (edits auto-save + live-apply)
-function applyAndEditGrad(id){gradEditId=id;gradSelStop=0;applyLibGrad(id);}
+function applyAndEditGrad(id){colorEditIdx=null;gradEditId=id;gradSelStop=0;applyLibGrad(id);}
 // Library click: apply the color, then open the picker to adjust it — edits update the library swatch + the object live
-function editApplyColor(i){applyLibColor(customSwatches[i]);const anchor=document.querySelector('#stCustom .st[data-si="'+i+'"]')||document.body;
-  openColorPicker(anchor,swHex(customSwatches[i]),swAlpha(customSwatches[i]),
-    (hex,a)=>{customSwatches[i]=withAlpha(toHex(hex),a);applyStyle(libTarget,toHex(hex),false);applyStyle(libTarget+'Opacity',a,false);if(libTarget==='fill')for(const o of styleTargets())o.fillSolid=toHex(hex);updateFSSwatch();},
-    ()=>{saveSwatches();if(state.sel.length)pushHistory();refreshPanels();});}
+// Library click: apply the colour to the selection AND open its inline editor (mirrors gradients)
+function editApplyColor(i){gradEditId=null;colorEditIdx=i;applyLibColor(customSwatches[i]);refreshPanels();}
 function fillStyles(box){const lbl='padding:8px 12px 3px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;';
   box.innerHTML=`<div class="libtargetrow"><span class="libtargetlbl">Apply to</span><div class="seg libtarget"><button data-lt="fill"${libTarget==='fill'?' class="on"':''}>Fill</button><button data-lt="stroke"${libTarget==='stroke'?' class="on"':''}>Stroke</button></div></div>
     <div style="${lbl}">Custom Colors</div><div class="styles-grid" id="stCustom"></div>
     <div style="${lbl}">Custom Gradients</div><div class="styles-grid" id="stGrads"></div>`;
   box.querySelectorAll('[data-lt]').forEach(b=>b.onclick=()=>{libTarget=b.dataset.lt;refreshPanels();});
   const cu=box.querySelector('#stCustom');
-  customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='st';d.dataset.si=i;swatchBg(d,fillCss(c));d.title=c+' — click to apply & edit · right-click to delete';d.onclick=()=>editApplyColor(i);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);saveSwatches();refreshPanels();}}]);cu.append(d);});
+  // pinned first: clears whichever target the Apply-to toggle is on. Not editable/deletable.
+  const noneSw=document.createElement('div');noneSw.className='st stnone';
+  noneSw.title='No '+(libTarget==='stroke'?'stroke':'fill')+' — click to clear';
+  noneSw.onclick=()=>{gradEditId=null;colorEditIdx=null;applyStyle(libTarget+'On',false,true);refreshPanels();};
+  cu.append(noneSw);
+  customSwatches.forEach((c,i)=>{const d=document.createElement('div');d.className='st'+(colorEditIdx===i?' editing':'');d.dataset.si=i;swatchBg(d,fillCss(c));d.title=c+' — click to apply & edit · right-click to delete';d.onclick=()=>editApplyColor(i);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>{customSwatches.splice(i,1);if(colorEditIdx===i)colorEditIdx=null;saveSwatches();refreshPanels();}}]);cu.append(d);});
   const add=document.createElement('div');add.className='st stadd';add.textContent='+';add.title='Create a custom color';add.onclick=()=>{let temp='#3d8bff';openColorPicker(add,temp,1,(hex)=>{temp=hex;},()=>{if(temp&&!customSwatches.includes(temp)){customSwatches.push(temp);saveSwatches();}refreshPanels();});};cu.append(add);
   const gr=box.querySelector('#stGrads');
   for(const g of customGradients){const d=document.createElement('div');d.className='st'+(g.id===gradEditId?' editing':'');d.dataset.gid=g.id;swatchBg(d,gradThumbCss(g.id));d.title='Click to apply & edit · right-click to delete';d.onclick=()=>applyAndEditGrad(g.id);d.oncontextmenu=e=>ctxMenu(e,[{label:'Delete',danger:true,fn:()=>deleteGradient(g.id)}]);gr.append(d);}
   const gadd=document.createElement('div');gadd.className='st stadd';gadd.textContent='+';gadd.title='Create a custom gradient';gadd.onclick=()=>{newGradient();applyLibGrad(gradEditId);};gr.append(gadd);
-  const gEdit=customGradients.find(x=>x.id===gradEditId);if(gEdit)renderGradEditor(box,gEdit);}
+  const gEdit=customGradients.find(x=>x.id===gradEditId);
+  if(gEdit)renderGradEditor(box,gEdit);
+  else if(colorEditIdx!=null&&customSwatches[colorEditIdx]!=null)renderColorEditor(box,colorEditIdx);
+  else colorEditIdx=null;}
 
 //////////////////// LAYERS ////////////////////
 function objectRow(s,nested){
