@@ -577,7 +577,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 202</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 203</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -2436,7 +2436,14 @@ function _svgStyle(el,svg){const cs=getComputedStyle(el),fill=_svgPaint(cs.fill,
 function _svgFixGrad(s){if(s.fillGrad)s.fill='url(#fillg_'+s.id+')';else delete s.fillGrad;return s;}
 function parseSVGToShapes(svgText){const holder=document.createElement('div');holder.style.cssText='position:fixed;left:-99999px;top:0;width:2400px;height:2400px;opacity:0;pointer-events:none;';
   holder.innerHTML=svgText;const svg=holder.querySelector('svg');if(!svg){return[];}
-  if(!svg.getAttribute('width'))svg.setAttribute('width','1200');if(!svg.getAttribute('height'))svg.setAttribute('height','1200');
+  // Sizes drive getCTM below, so they decide the shapes' natural size. With a viewBox and no
+  // width/height, the viewBox IS the natural size — forcing 1200 would scale the import instead.
+  if(!svg.getAttribute('width')||!svg.getAttribute('height')){
+    const vb=(svg.getAttribute('viewBox')||'').split(/[\s,]+/).filter(v=>v!=='').map(Number);
+    const ok=vb.length===4&&vb[2]>0&&vb[3]>0&&vb.every(n=>isFinite(n));
+    if(!svg.getAttribute('width'))svg.setAttribute('width',ok?vb[2]:1200);
+    if(!svg.getAttribute('height'))svg.setAttribute('height',ok?vb[3]:1200);
+  }
   document.body.append(holder);const shapes=[];
   try{const els=svg.querySelectorAll('path,rect,circle,ellipse,line,polygon,polyline,text');
     for(const el of els){const cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')continue;
@@ -2452,7 +2459,9 @@ function parseSVGToShapes(svgText){const holder=document.createElement('div');ho
   holder.remove();return shapes;}
 function importSVGShapes(svgText,cx,cy){let shapes=[];try{shapes=parseSVGToShapes(svgText);}catch(_){}if(!shapes.length)return false;
   let mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;for(const s of shapes){const b=shapeBBox(s);mnx=Math.min(mnx,b.x);mny=Math.min(mny,b.y);mxx=Math.max(mxx,b.x+b.w);mxy=Math.max(mxy,b.y+b.h);}
-  if(!isFinite(mnx))return false;const w=mxx-mnx||1,h=mxy-mny||1,sc=Math.min(state.doc.w*0.8/w,state.doc.h*0.8/h,4),tx=(cx==null?state.doc.w/2:cx)-(mnx+w/2)*sc,ty=(cy==null?state.doc.h/2:cy)-(mny+h/2)*sc;
+  // Place at the size the file actually specifies. Scaling to fill the page blew up every import —
+  // a 180px oval with a 7.5px stroke arrived at 480px/20px. Only shrink, and only if it can't fit.
+  if(!isFinite(mnx))return false;const w=mxx-mnx||1,h=mxy-mny||1,sc=Math.min(1,state.doc.w*0.9/w,state.doc.h*0.9/h),tx=(cx==null?state.doc.w/2:cx)-(mnx+w/2)*sc,ty=(cy==null?state.doc.h/2:cy)-(mny+h/2)*sc;
   const gid='g'+(uidc++),layer=state.activeLayer||(state.layers[0]&&state.layers[0].id);
   for(const s of shapes){if(s.subpaths)s.subpaths=s.subpaths.map(a=>a.map(p=>({x:p.x*sc+tx,y:p.y*sc+ty})));if(s.type==='text'){s.x=s.x*sc+tx;s.y=s.y*sc+ty;s.fontSize=Math.max(4,Math.round(s.fontSize*sc));}if(s.strokeWidth)s.strokeWidth=Math.max(.25,s.strokeWidth*sc);s.groupId=gid;s.layerId=layer;state.shapes.push(s);}
   state.sel=shapes.map(s=>s.id);pushHistory();render();refreshPanels();return true;}
