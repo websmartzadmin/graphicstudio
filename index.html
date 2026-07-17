@@ -587,7 +587,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 214</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 215</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1427,7 +1427,7 @@ function placeTextEditor(s,isNew){const m=gContent.getScreenCTM(),wr=wrap.getBou
 // it to a hairline — a 0.36 horizontal squash left a 0.36px caret, effectively invisible. Bake that
 // squash into the font size and divide it back out of the transform: the glyphs render identically,
 // but the caret is never thinner than 1px. Text at sx>=1 is untouched (L=1).
-const CARET_MIN_PX=2;
+const CARET_MIN_PX=3;
 function editScale(s){const sx=s.sx||1;
   // caret on screen = sx/L, so L = sx/CARET_MIN_PX gets us the minimum; never magnify (L<=1).
   const want=Math.min(1,sx/CARET_MIN_PX);
