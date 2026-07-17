@@ -173,7 +173,8 @@
   .stepper input[type=number]{background:transparent!important;border:none!important;box-shadow:none!important;color:#1b1b1b!important;border-radius:0!important;padding:2px 4px!important;width:100%;min-width:0;-webkit-appearance:none;}
   .stepper input[type=number]::-webkit-inner-spin-button,.stepper input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;display:none;}
   .stepbtns{display:flex;flex-direction:column;flex:0 0 auto;border-right:1px solid #b6b29c;justify-content:center;}
-  .stepbtns button{border:none;background:transparent;color:#4a4a44;font-size:7px;line-height:1;padding:0 5px;cursor:pointer;height:11px;display:flex;align-items:center;justify-content:center;}
+  /* 5px each side made the arrow column ~18px of a 55px pill, leaving too little for the digits */
+  .stepbtns button{border:none;background:transparent;color:#4a4a44;font-size:7px;line-height:1;padding:0 3px;cursor:pointer;height:11px;display:flex;align-items:center;justify-content:center;}
   .stepbtns button:hover{color:#000;background:#00000012;}
   input[type=number]{width:100%;}
   input:focus,select:focus{outline:none;border-color:var(--accent);}
@@ -209,8 +210,8 @@
   .geosec{padding:6px 12px 2px;}
   .geocol{display:flex;flex-direction:column;}
   .geohead{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
-  .geofield{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
-  .geofield .gi{width:15px;flex:0 0 auto;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;}
+  .geofield{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
+  .geofield .gi{width:13px;flex:0 0 auto;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;}
   .geofield .gi svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
   /* 25px held only "px"/"°" (~13px) and starved the stepper of the room a 4-digit value needs */
   .geofield .unit{flex:0 0 auto;color:var(--muted);font-size:10px;width:14px;text-align:left;}
@@ -578,7 +579,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 204</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 205</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
