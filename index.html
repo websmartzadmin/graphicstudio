@@ -587,7 +587,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 212</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 214</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1380,7 +1380,23 @@ function updateCrop(p){const s=drag.shape,lp=toLocal(p,s),h=drag.handle,b=drag.b
   if(nw<4){if(h.indexOf('w')>=0)nx=b.x+b.w-4;nw=4;}
   if(nh<4){if(h.indexOf('n')>=0)ny=b.y+b.h-4;nh=4;}
   s.x=nx;s.y=ny;s.w=nw;s.h=nh;clampCrop(s);drag.moved=true;render();renderOverlay();updateStatus();}
-function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.getBoundingClientRect();
+// Auto-width text rotates about its bbox centre, and that centre slides right as the text grows —
+// so every keystroke swung a rotated block away from where it started. Hold the world position of
+// the anchor (s.x,s.y) still across the edit. Shifting s.x/s.y moves the bbox centre by the same
+// amount, so the anchor moves with it one-for-one and a single correction is exact.
+function textAnchorWorld(s){return shapeMatrix(s).transformPoint(new DOMPoint(s.x,s.y));}
+function textDrifts(s){return !!(s.rot||s.shear||s.shearY)&&!(s.boxWidth>0);}
+function setTextHoldingAnchor(s,val){
+  if(!textDrifts(s)){s.text=val;render();return;}
+  const a0=textAnchorWorld(s);
+  s.text=val;render();                       // render remeasures s.w, which moves the pivot
+  const a1=textAnchorWorld(s);
+  s.x+=a0.x-a1.x;s.y+=a0.y-a1.y;render();
+}
+function editText(s,isNew){editing=s;placeTextEditor(s,isNew);
+  // Defer focus to the next tick so the click that created the box can't steal focus and blur it away
+  setTimeout(()=>{if(editing===s){textEditor.focus();if(isNew)textEditor.select();else{const n=textEditor.value.length;textEditor.setSelectionRange(n,n);}}},0);}
+function placeTextEditor(s,isNew){const m=gContent.getScreenCTM(),wr=wrap.getBoundingClientRect();
   // Position on the block's visual left edge, not s.x — for auto-width text s.x is the anchor, so a
   // centre/right-aligned block would sit half (or a full) block to the right of the real text.
   // Rotate the origin with the shape, or a rotated block leaves the caret off in space while the
@@ -1392,25 +1408,31 @@ function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.get
   // True edit-in-place: the real SVG text stays visible and updates as you type, and the textarea sits
   // invisibly on top purely for caret/selection/input. Nothing about the fill is reproduced in CSS, so
   // gradients (angle, objectBoundingBox squash, radial ellipse), stroke and effects simply can't drift.
-  const ecar=!s.fillOn?'#000':(fillIsGrad(s)&&s.fillGrad&&s.fillGrad.stops&&s.fillGrad.stops[0]?s.fillGrad.stops[0][0]:(typeof s.fill==='string'&&s.fill.startsWith('url(')?'#000':s.fill));
-  textEditor.style.backgroundImage='';textEditor.style.webkitBackgroundClip='';textEditor.style.backgroundClip='';textEditor.style.caretColor=ecar;
-  textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom*L)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom*L)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color='transparent';textEditor.value=s.text;
+  // The caret used to take the text's own colour, which camouflaged it against the very glyphs it
+  // sits among — a pink caret inside pink text is invisible. The UI accent reads as "editing" and
+  // contrasts with artwork far more often than the fill ever could.
+  textEditor.style.backgroundImage='';textEditor.style.webkitBackgroundClip='';textEditor.style.backgroundClip='';textEditor.style.caretColor='#2f7bf6';
+  textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom*L)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom*L)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color='transparent';
+  // Only when it actually differs: re-placing mid-edit must not reset the value, or the caret would
+  // be thrown back to the end of the text on every keystroke.
+  if(textEditor.value!==s.text)textEditor.value=s.text;
   // The glyph size already carries the zoom and L, so the overlay only needs the matrix's linear
   // part (rotation, shear, stretch) with L divided back out — the glyphs land identically either
   // way, but the caret is measured in the textarea's own space and so escapes the squash.
   textEditor.style.transformOrigin='0 0';
   const TA=TM.a/L,TB=TM.b/L,TC=TM.c/L,TD=TM.d/L;
   textEditor.style.transform=(TA===1&&TB===0&&TC===0&&TD===1)?'':`matrix(${TA},${TB},${TC},${TD},0,0)`;
-  gOverlay.innerHTML='';autosizeText();textEditor._isNew=isNew;
-  // Defer focus to the next tick so the click that created the box can't steal focus and blur it away
-  setTimeout(()=>{if(editing===s){textEditor.focus();if(isNew)textEditor.select();else{const n=textEditor.value.length;textEditor.setSelectionRange(n,n);}}},0);}
+  gOverlay.innerHTML='';autosizeText();if(isNew!==undefined)textEditor._isNew=isNew;}
 // The browser draws its caret ~1px wide in the textarea's OWN space, so a CSS scale under 1 shrinks
 // it to a hairline — a 0.36 horizontal squash left a 0.36px caret, effectively invisible. Bake that
 // squash into the font size and divide it back out of the transform: the glyphs render identically,
 // but the caret is never thinner than 1px. Text at sx>=1 is untouched (L=1).
-function editScale(s){const sx=s.sx||1;if(sx>=1)return 1;
+const CARET_MIN_PX=2;
+function editScale(s){const sx=s.sx||1;
+  // caret on screen = sx/L, so L = sx/CARET_MIN_PX gets us the minimum; never magnify (L<=1).
+  const want=Math.min(1,sx/CARET_MIN_PX);
   const fs=Math.max(1,(s.fontSize||16)*state.zoom);
-  return Math.max(sx,Math.min(1,6/fs));}   // keep the local font big enough for sane metrics
+  return Math.max(want,Math.min(1,10/fs));}   // keep the local font big enough for sane metrics
 // height:auto on a textarea is its `rows` size (default 2), not its content — so scrollHeight
 // reported two lines for one line of text and the edit box came out twice as tall as the glyphs.
 // Collapse to 0 first, exactly as the width below already does.
@@ -1421,12 +1443,16 @@ function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSp
     textEditor.style.width='0px';textEditor.style.width=Math.max(20,textEditor.scrollWidth+2)+'px';
     autosizeFit();}}
 // The visible text is the real SVG one, so push each keystroke straight into it
-textEditor.addEventListener('input',()=>{if(editing){editing.text=textEditor.value;render();}autosizeText();});
+textEditor.addEventListener('input',()=>{if(editing){const drift=textDrifts(editing);
+  setTextHoldingAnchor(editing,textEditor.value);
+  // the anchor correction moves s.x/s.y, so the overlay has to follow the glyphs
+  if(drift)placeTextEditor(editing);}
+  autosizeText();});
 textEditor.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();commitText();}if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();commitText();}});
 // Don't commit/exit the text when focus moves to a font/size/spacing control — let the user tweak while still editing.
 textEditor.addEventListener('focusout',e=>{const to=e.relatedTarget;if(to&&to.closest&&to.closest('#infobar,#inspPane'))return;commitText();});
 function commitText(){if(!editing)return;const s=editing;editing=null;const v=textEditor.value,isNew=textEditor._isNew;textEditor.style.display='none';textEditor.blur();
-  if(v.trim()===''){state.shapes=state.shapes.filter(x=>x.id!==s.id);state.sel=state.sel.filter(id=>id!==s.id);if(!isNew)pushHistory();}else{s.text=v;pushHistory();}render();refreshPanels();}
+  if(v.trim()===''){state.shapes=state.shapes.filter(x=>x.id!==s.id);state.sel=state.sel.filter(id=>id!==s.id);if(!isNew)pushHistory();}else{setTextHoldingAnchor(s,v);pushHistory();}render();refreshPanels();}
 
 //////////////////// TOOLS UI ////////////////////
 function buildTools(){const box=document.getElementById('toolgrid');box.innerHTML='';
