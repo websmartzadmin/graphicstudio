@@ -209,7 +209,12 @@
   .geo2col{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:8px 12px 2px;}
   .geosec{padding:6px 12px 2px;}
   .geocol{display:flex;flex-direction:column;}
-  .geohead{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+  .geohead{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;}
+  /* The proportion lock lives in the Size header, not beside W/H: inline it cost the fields 12px and
+     made them narrower than every other stepper. Negative margins keep it from growing the header,
+     which would drop the Size fields below the Position fields beside them. */
+  .geohead .lockmini{width:18px;height:18px;border-radius:4px;margin:-4px 0;}
+  .geohead .lockmini svg{width:11px;height:11px;}
   .geofield{display:flex;align-items:center;gap:4px;margin-bottom:5px;}
   .geofield .gi{width:13px;flex:0 0 auto;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;}
   .geofield .gi svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
@@ -312,10 +317,6 @@
   .btnrow{display:flex;gap:6px;padding:6px 12px;flex-wrap:wrap;}
   .btnrow button{flex:1;min-width:56px;background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:6px;border-radius:6px;cursor:pointer;font-size:11px;}
   .btnrow button:hover{background:var(--hover);}
-  .sizewrap{display:flex;align-items:center;gap:6px;}
-  .sizewrap .sizefields{flex:1;min-width:0;}
-  .sizewrap .sizefields .geofield:last-child{margin-bottom:0;}
-  .sizewrap .lockbtn{flex:0 0 auto;}
   .dssize{display:flex;align-items:center;gap:6px;}
   .dssize .dssize-rows{flex:1;min-width:0;}
   .dssize .lockbtn{flex:0 0 auto;}
@@ -579,7 +580,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 205</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 206</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1744,14 +1745,9 @@ function fillGeometry(box){const sels=selShapes();
         <div class="geofield"><span class="gi">X</span><input type="number" id="pX" value="${Math.round(b.x)}"><span class="unit">px</span></div>
         <div class="geofield"><span class="gi">Y</span><input type="number" id="pY" value="${Math.round(b.y)}"><span class="unit">px</span></div>
       </div>
-      <div class="geocol"><div class="geohead">Size</div>
-        <div class="sizewrap">
-          <div class="sizefields">
-            <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"></div>
-            <div class="geofield"><span class="gi">${HICON}</span><input type="number" id="pH" value="${Math.round(b.h)}"></div>
-          </div>
-          <button class="lockbtn ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button>
-        </div>
+      <div class="geocol"><div class="geohead">Size<button class="lockbtn lockmini ${sizeLocked?'on':''}" id="szLock" title="Lock proportions">${sizeLocked?lockIcon():unlockIcon()}</button></div>
+        <div class="geofield"><span class="gi">${WICON}</span><input type="number" id="pW" value="${Math.round(b.w)}"><span class="unit">px</span></div>
+        <div class="geofield"><span class="gi">${HICON}</span><input type="number" id="pH" value="${Math.round(b.h)}"><span class="unit">px</span></div>
       </div>
     </div>`;
   box.innerHTML=multi?`<div class="hint" style="padding:6px 12px 3px;">${sels.length} objects selected — group position &amp; size.</div>${posSize}`:`
