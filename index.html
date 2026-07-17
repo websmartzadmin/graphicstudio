@@ -108,7 +108,9 @@
   #stage.tool-rect,#stage.tool-roundrect,#stage.tool-ellipse,#stage.tool-line,#stage.tool-polygon,#stage.tool-star,#stage.tool-pen,#stage.tool-pencil,#stage.tool-text{cursor:crosshair;}
   /* No border/padding in the layout: they'd shrink the usable width (premature wrap) and offset the
      text — both amplified by any stretch. The accent ring is drawn with box-shadow instead. */
-  #textEditor{position:absolute;display:none;background:transparent;border:none;box-shadow:0 0 0 1px var(--accent);color:#000;outline:none;resize:none;overflow:hidden;padding:0;line-height:1.15;transform-origin:0 0;z-index:30;white-space:pre;-webkit-user-select:text;user-select:text;cursor:text;}
+  /* No outline: the box hugs the glyphs, so its right edge read as a stray blue line sitting at the
+     end of the text. The caret is the edit-mode cue. */
+  #textEditor{position:absolute;display:none;background:transparent;border:none;color:#000;outline:none;resize:none;overflow:hidden;padding:0;line-height:1.15;transform-origin:0 0;z-index:30;white-space:pre;-webkit-user-select:text;user-select:text;cursor:text;}
   #cropHint{position:absolute;display:none;left:50%;top:14px;transform:translateX(-50%);background:#000d;color:#fff;padding:7px 12px;border-radius:8px;font-size:12px;z-index:40;box-shadow:0 6px 24px #0007;white-space:nowrap;}
   #cropHint b{color:var(--accent);font-weight:600;}
   #cropHint button{margin:0 3px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:600;cursor:pointer;}
@@ -585,7 +587,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 211</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 212</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1384,7 +1386,7 @@ function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.get
   // Rotate the origin with the shape, or a rotated block leaves the caret off in space while the
   // glyphs sit elsewhere — it reads as "can't edit this". Only the rotation/shear belongs here:
   // shapeBBox already has sx/sy applied, so using the full text matrix would scale it twice.
-  const eb=shapeBBox(s),TM=textMatrix(s);
+  const eb=shapeBBox(s),TM=textMatrix(s),L=editScale(s);
   const o=shapeMatrix(s).transformPoint(new DOMPoint(eb.x,eb.y));
   const px=m.a*o.x+m.c*o.y+m.e-wr.left,py=m.b*o.x+m.d*o.y+m.f-wr.top;
   // True edit-in-place: the real SVG text stays visible and updates as you type, and the textarea sits
@@ -1392,19 +1394,28 @@ function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.get
   // gradients (angle, objectBoundingBox squash, radial ellipse), stroke and effects simply can't drift.
   const ecar=!s.fillOn?'#000':(fillIsGrad(s)&&s.fillGrad&&s.fillGrad.stops&&s.fillGrad.stops[0]?s.fillGrad.stops[0][0]:(typeof s.fill==='string'&&s.fill.startsWith('url(')?'#000':s.fill));
   textEditor.style.backgroundImage='';textEditor.style.webkitBackgroundClip='';textEditor.style.backgroundClip='';textEditor.style.caretColor=ecar;
-  textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color='transparent';textEditor.value=s.text;
-  // The glyph size already carries the zoom, so the overlay only needs the matrix's linear part
-  // (rotation, shear and stretch) to sit exactly on the rendered text.
+  textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom*L)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom*L)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color='transparent';textEditor.value=s.text;
+  // The glyph size already carries the zoom and L, so the overlay only needs the matrix's linear
+  // part (rotation, shear, stretch) with L divided back out — the glyphs land identically either
+  // way, but the caret is measured in the textarea's own space and so escapes the squash.
   textEditor.style.transformOrigin='0 0';
-  textEditor.style.transform=TM.isIdentity?'':`matrix(${TM.a},${TM.b},${TM.c},${TM.d},0,0)`;
+  const TA=TM.a/L,TB=TM.b/L,TC=TM.c/L,TD=TM.d/L;
+  textEditor.style.transform=(TA===1&&TB===0&&TC===0&&TD===1)?'':`matrix(${TA},${TB},${TC},${TD},0,0)`;
   gOverlay.innerHTML='';autosizeText();textEditor._isNew=isNew;
   // Defer focus to the next tick so the click that created the box can't steal focus and blur it away
   setTimeout(()=>{if(editing===s){textEditor.focus();if(isNew)textEditor.select();else{const n=textEditor.value.length;textEditor.setSelectionRange(n,n);}}},0);}
+// The browser draws its caret ~1px wide in the textarea's OWN space, so a CSS scale under 1 shrinks
+// it to a hairline — a 0.36 horizontal squash left a 0.36px caret, effectively invisible. Bake that
+// squash into the font size and divide it back out of the transform: the glyphs render identically,
+// but the caret is never thinner than 1px. Text at sx>=1 is untouched (L=1).
+function editScale(s){const sx=s.sx||1;if(sx>=1)return 1;
+  const fs=Math.max(1,(s.fontSize||16)*state.zoom);
+  return Math.max(sx,Math.min(1,6/fs));}   // keep the local font big enough for sane metrics
 // height:auto on a textarea is its `rows` size (default 2), not its content — so scrollHeight
 // reported two lines for one line of text and the edit box came out twice as tall as the glyphs.
 // Collapse to 0 first, exactly as the width below already does.
 function autosizeFit(){textEditor.style.height='0px';textEditor.style.height=textEditor.scrollHeight+'px';}
-function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSpace='pre-wrap';textEditor.style.width=(editing.boxWidth*state.zoom+1)+'px';autosizeFit();}else{textEditor.style.whiteSpace='pre';
+function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSpace='pre-wrap';textEditor.style.width=(editing.boxWidth*state.zoom*editScale(editing)+1)+'px';autosizeFit();}else{textEditor.style.whiteSpace='pre';
     // width:auto on a textarea is its intrinsic `cols` size, not its content — collapse to 0 first so
     // scrollWidth reports the real text width, otherwise the box is far wider than the glyphs.
     textEditor.style.width='0px';textEditor.style.width=Math.max(20,textEditor.scrollWidth+2)+'px';
@@ -2526,7 +2537,7 @@ function applyText(prop,val,commit){let changed=false;for(const s of selShapes()
     if(prop==='align'&&!(s.boxWidth>0)){const b=shapeBBox(s);s.align=val;s.x=b.x+(val==='middle'?b.w/2:val==='end'?b.w:0);}
     else s[prop]=val;
     changed=true;}state.style[prop]=val;
-  if(editing){if(prop==='fontFamily')textEditor.style.fontFamily=val;else if(prop==='fontWeight')textEditor.style.fontWeight=val;else if(prop==='fontSize')textEditor.style.fontSize=(val*state.zoom)+'px';else if(prop==='letterSpacing')textEditor.style.letterSpacing=(val*state.zoom)+'px';else if(prop==='lineHeight')textEditor.style.lineHeight=val;else if(prop==='fontStyle')textEditor.style.fontStyle=val;else if(prop==='underline')textEditor.style.textDecoration=val?'underline':'none';else if(prop==='align')textEditor.style.textAlign=(val==='middle'?'center':val==='end'?'right':'left');autosizeText();}
+  if(editing){const _L=editScale(editing);if(prop==='fontFamily')textEditor.style.fontFamily=val;else if(prop==='fontWeight')textEditor.style.fontWeight=val;else if(prop==='fontSize')textEditor.style.fontSize=(val*state.zoom*_L)+'px';else if(prop==='letterSpacing')textEditor.style.letterSpacing=(val*state.zoom*_L)+'px';else if(prop==='lineHeight')textEditor.style.lineHeight=val;else if(prop==='fontStyle')textEditor.style.fontStyle=val;else if(prop==='underline')textEditor.style.textDecoration=val?'underline':'none';else if(prop==='align')textEditor.style.textAlign=(val==='middle'?'center':val==='end'?'right':'left');autosizeText();}
   render();
   if(commit){if(changed)pushHistory();refreshPanels();}}
 function toggleTextStyle(k){const s=curStyle();if(k==='bold')applyText('fontWeight',(parseInt(s.fontWeight||400)>=600?'400':'700'),true);else if(k==='italic')applyText('fontStyle',s.fontStyle==='italic'?'normal':'italic',true);else if(k==='underline')applyText('underline',!s.underline,true);}
