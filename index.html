@@ -220,7 +220,9 @@
   .geofield .gi svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
   /* 25px held only "px"/"°" (~13px) and starved the stepper of the room a 4-digit value needs */
   .geofield .unit{flex:0 0 auto;color:var(--muted);font-size:10px;width:14px;text-align:left;}
-  .geofield .stepper{flex:1;min-width:0;}
+  /* Sized for the content, not the column: 4 digits plus a minus sign ("-1235"), with the arrows
+     and padding accounted for. Stretching to fill left room for 6 digits and looked bloated. */
+  .geofield .stepper{flex:0 0 56px;min-width:0;}
   .geofield select{flex:1;min-width:0;}
   .geofield .orientseg{flex:1;}
   .geofield.gfrange input[type=range]{flex:1;min-width:0;width:100%;margin:0;}
@@ -580,7 +582,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 206</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 207</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
