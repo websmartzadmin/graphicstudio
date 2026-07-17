@@ -585,7 +585,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 210</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 211</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1400,11 +1400,15 @@ function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.get
   gOverlay.innerHTML='';autosizeText();textEditor._isNew=isNew;
   // Defer focus to the next tick so the click that created the box can't steal focus and blur it away
   setTimeout(()=>{if(editing===s){textEditor.focus();if(isNew)textEditor.select();else{const n=textEditor.value.length;textEditor.setSelectionRange(n,n);}}},0);}
-function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSpace='pre-wrap';textEditor.style.width=(editing.boxWidth*state.zoom+1)+'px';textEditor.style.height='auto';textEditor.style.height=textEditor.scrollHeight+'px';}else{textEditor.style.whiteSpace='pre';
+// height:auto on a textarea is its `rows` size (default 2), not its content — so scrollHeight
+// reported two lines for one line of text and the edit box came out twice as tall as the glyphs.
+// Collapse to 0 first, exactly as the width below already does.
+function autosizeFit(){textEditor.style.height='0px';textEditor.style.height=textEditor.scrollHeight+'px';}
+function autosizeText(){if(editing&&editing.boxWidth>0){textEditor.style.whiteSpace='pre-wrap';textEditor.style.width=(editing.boxWidth*state.zoom+1)+'px';autosizeFit();}else{textEditor.style.whiteSpace='pre';
     // width:auto on a textarea is its intrinsic `cols` size, not its content — collapse to 0 first so
     // scrollWidth reports the real text width, otherwise the box is far wider than the glyphs.
     textEditor.style.width='0px';textEditor.style.width=Math.max(20,textEditor.scrollWidth+2)+'px';
-    textEditor.style.height='auto';textEditor.style.height=textEditor.scrollHeight+'px';}}
+    autosizeFit();}}
 // The visible text is the real SVG one, so push each keystroke straight into it
 textEditor.addEventListener('input',()=>{if(editing){editing.text=textEditor.value;render();}autosizeText();});
 textEditor.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'){e.preventDefault();commitText();}if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();commitText();}});
