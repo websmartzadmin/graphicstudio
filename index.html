@@ -585,7 +585,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 209</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 210</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -907,7 +907,24 @@ function wrapText(s){if(!_measCtx)_measCtx=document.createElement('canvas').getC
     out.push(cur);}
   return out;}
 function justifyText(el,targetW){const ts=[...el.querySelectorAll('tspan')];for(let i=0;i<ts.length-1;i++){const t=ts[i];t.removeAttribute('word-spacing');let len=0;try{len=t.getComputedTextLength();}catch(_){continue;}const sp=(t.textContent.match(/ /g)||[]).length;if(sp>0&&targetW-len>0)t.setAttribute('word-spacing',(targetW-len)/sp);}}
-function buildTextEl(s){const align=s.align||'start',anchor=align==='justify'?'start':align;let ax;if(s.boxWidth>0){const w=s.boxWidth;ax=anchor==='middle'?s.x+w/2:anchor==='end'?s.x+w:s.x;}else{ax=s.x;}
+// The x the <text> element is anchored at — for a fixed-width box the anchor moves to the box's
+// centre/right edge, for auto-width text it is s.x itself.
+function textAnchorX(s){const align=s.align||'start',anchor=align==='justify'?'start':align;
+  if(s.boxWidth>0){const w=s.boxWidth;return anchor==='middle'?s.x+w/2:anchor==='end'?s.x+w:s.x;}
+  return s.x;}
+// The exact matrix the rendered <text> carries. The editor overlay reuses this rather than
+// reconstructing it — the last time the editor imitated the renderer it drifted on every rotation.
+function textMatrix(s){
+  const _sx=s.sx||1,_sy=s.sy||1;
+  if(_sx===1&&_sy===1)return shapeMatrix(s);
+  const bb=shapeBBox(s),cx2=bb.x+bb.w/2,cy2=bb.y+bb.h/2;let M=new DOMMatrix();
+  if(s.rot||s.shear||s.shearY){M=M.translate(cx2,cy2);if(s.rot)M=M.rotate(s.rot);if(s.shear)M=M.skewX(s.shear);if(s.shearY)M=M.skewY(s.shearY);M=M.translate(-cx2,-cy2);}
+  // Scale from the box's left edge for a fixed-width box (shapeBBox assumes the box grows right
+  // from s.x); auto-width text has no box, so it scales about its anchor.
+  const ox=s.boxWidth>0?s.x:textAnchorX(s);
+  return M.translate(ox,s.y).scale(_sx,_sy).translate(-ox,-s.y);
+}
+function buildTextEl(s){const align=s.align||'start',anchor=align==='justify'?'start':align;const ax=textAnchorX(s);
   const e=el('text',{x:ax,y:s.y,'font-size':s.fontSize,'font-family':s.fontFamily,'font-weight':s.fontWeight,'text-anchor':anchor,fill:s.fillOn?s.fill:'#000','dominant-baseline':'text-before-edge',opacity:s.opacity});
   if(s.fillOn&&s.fillOpacity!=null&&s.fillOpacity<1)e.setAttribute('fill-opacity',s.fillOpacity);
   if(s.strokeOn){e.setAttribute('stroke',s.stroke);e.setAttribute('stroke-width',s.strokeWidth);}
@@ -915,15 +932,8 @@ function buildTextEl(s){const align=s.align||'start',anchor=align==='justify'?'s
   if(s.fontStyle&&s.fontStyle!=='normal')e.setAttribute('font-style',s.fontStyle);
   if(s.underline)e.setAttribute('text-decoration','underline');
   const lh=s.lineHeight||1.2;const lines=s.boxWidth>0?wrapText(s):(s.text||'').split('\n');lines.forEach((ln,i)=>{const t=el('tspan',{x:ax,dy:i===0?0:s.fontSize*lh});t.textContent=ln||' ';e.append(t);});
-  const _sx=s.sx||1,_sy=s.sy||1;
-  if(_sx!==1||_sy!==1){const bb=shapeBBox(s),cx2=bb.x+bb.w/2,cy2=bb.y+bb.h/2;let M=new DOMMatrix();
-    if(s.rot||s.shear||s.shearY){M=M.translate(cx2,cy2);if(s.rot)M=M.rotate(s.rot);if(s.shear)M=M.skewX(s.shear);if(s.shearY)M=M.skewY(s.shearY);M=M.translate(-cx2,-cy2);}
-    // Scale from the box's left edge for a fixed-width box (shapeBBox assumes the box grows right
-    // from s.x); auto-width text has no box, so it scales about its anchor.
-    const ox=s.boxWidth>0?s.x:ax;
-    M=M.translate(ox,s.y).scale(_sx,_sy).translate(-ox,-s.y);
-    e.setAttribute('transform',`matrix(${M.a} ${M.b} ${M.c} ${M.d} ${M.e} ${M.f})`);
-  }else{const tr=transformStr(s);if(tr)e.setAttribute('transform',tr);}
+  const M=textMatrix(s);
+  if(!M.isIdentity)e.setAttribute('transform',`matrix(${M.a} ${M.b} ${M.c} ${M.d} ${M.e} ${M.f})`);
   if(s.blend&&s.blend!=='normal')e.style.mixBlendMode=s.blend;return e;}
 const FX_META={
   shadow:{label:'Drop Shadow',place:'behind',color:'#000000'},
@@ -1371,16 +1381,22 @@ function updateCrop(p){const s=drag.shape,lp=toLocal(p,s),h=drag.handle,b=drag.b
 function editText(s,isNew){editing=s;const m=gContent.getScreenCTM(),wr=wrap.getBoundingClientRect();
   // Position on the block's visual left edge, not s.x — for auto-width text s.x is the anchor, so a
   // centre/right-aligned block would sit half (or a full) block to the right of the real text.
-  const eb=shapeBBox(s);
-  const px=m.a*eb.x+m.c*eb.y+m.e-wr.left,py=m.b*eb.x+m.d*eb.y+m.f-wr.top;
+  // Rotate the origin with the shape, or a rotated block leaves the caret off in space while the
+  // glyphs sit elsewhere — it reads as "can't edit this". Only the rotation/shear belongs here:
+  // shapeBBox already has sx/sy applied, so using the full text matrix would scale it twice.
+  const eb=shapeBBox(s),TM=textMatrix(s);
+  const o=shapeMatrix(s).transformPoint(new DOMPoint(eb.x,eb.y));
+  const px=m.a*o.x+m.c*o.y+m.e-wr.left,py=m.b*o.x+m.d*o.y+m.f-wr.top;
   // True edit-in-place: the real SVG text stays visible and updates as you type, and the textarea sits
   // invisibly on top purely for caret/selection/input. Nothing about the fill is reproduced in CSS, so
   // gradients (angle, objectBoundingBox squash, radial ellipse), stroke and effects simply can't drift.
   const ecar=!s.fillOn?'#000':(fillIsGrad(s)&&s.fillGrad&&s.fillGrad.stops&&s.fillGrad.stops[0]?s.fillGrad.stops[0][0]:(typeof s.fill==='string'&&s.fill.startsWith('url(')?'#000':s.fill));
   textEditor.style.backgroundImage='';textEditor.style.webkitBackgroundClip='';textEditor.style.backgroundClip='';textEditor.style.caretColor=ecar;
   textEditor.style.display='block';textEditor.style.left=px+'px';textEditor.style.top=py+'px';textEditor.style.fontSize=(s.fontSize*state.zoom)+'px';textEditor.style.fontFamily=s.fontFamily;textEditor.style.fontWeight=s.fontWeight;textEditor.style.letterSpacing=((s.letterSpacing||0)*state.zoom)+'px';textEditor.style.lineHeight=(s.lineHeight||1.2);textEditor.style.textAlign=(s.align==='middle'?'center':s.align==='end'?'right':'left');textEditor.style.fontStyle=s.fontStyle||'normal';textEditor.style.textDecoration=s.underline?'underline':'none';textEditor.style.color='transparent';textEditor.value=s.text;
-  // Match any stretch, so the caret/selection track the rendered glyphs instead of an unscaled copy
-  const _esx=s.sx||1,_esy=s.sy||1;textEditor.style.transformOrigin='0 0';textEditor.style.transform=(_esx!==1||_esy!==1)?`scale(${_esx},${_esy})`:'';
+  // The glyph size already carries the zoom, so the overlay only needs the matrix's linear part
+  // (rotation, shear and stretch) to sit exactly on the rendered text.
+  textEditor.style.transformOrigin='0 0';
+  textEditor.style.transform=TM.isIdentity?'':`matrix(${TM.a},${TM.b},${TM.c},${TM.d},0,0)`;
   gOverlay.innerHTML='';autosizeText();textEditor._isNew=isNew;
   // Defer focus to the next tick so the click that created the box can't steal focus and blur it away
   setTimeout(()=>{if(editing===s){textEditor.focus();if(isNew)textEditor.select();else{const n=textEditor.value.length;textEditor.setSelectionRange(n,n);}}},0);}
