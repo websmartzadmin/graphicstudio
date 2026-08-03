@@ -587,7 +587,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 216</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 217</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -1024,13 +1024,44 @@ window.addEventListener('resize',()=>drawRulers());
 function resetDefs(){gDefs.innerHTML='';for(const g of allGradients())appendShapeGrad(gDefs,g.id,g);
   for(const s of state.shapes)if(fillIsGrad(s))appendShapeGrad(gDefs,'fillg_'+s.id,s.fillGrad);
   if(typeof state.doc.bg==='string'&&state.doc.bg.indexOf('url(#docbg')===0&&state.doc.bgGrad)appendShapeGrad(gDefs,'docbg',state.doc.bgGrad);}
+function _hasActiveFx(s){return FX_ORDER.some(k=>s[k]&&s[k].on);}
+// two shapes belong to one unified effect only if their effect config is identical
+function _fxKey(s){return JSON.stringify([s.shadow,s.innerShadow,s.glow,s.innerGlow,s.blur,s.fxOrder||null]);}
+// Consecutive members of the same group that carry the identical active effect render as ONE unit,
+// so the group casts a single shadow/glow from its combined silhouette instead of each piece
+// shadowing the pieces behind it. Mixed or per-shape effects fall back to per-shape rendering.
+function renderUnits(order){
+  const units=[];let i=0;
+  while(i<order.length){
+    const gid=order[i].groupId;
+    if(gid){let j=i;while(j<order.length&&order[j].groupId===gid)j++;
+      const run=order.slice(i,j);
+      if(run.length>1&&_hasActiveFx(run[0])&&run.every(m=>_fxKey(m)===_fxKey(run[0])))units.push({group:true,members:run});
+      else for(const m of run)units.push({shape:m});
+      i=j;
+    }else{units.push({shape:order[i]});i++;}
+  }
+  return units;
+}
+// Render one unit into parent, returning [shape,element] pairs for post-processing (cursor, text
+// measuring). A group unit wraps its members in one <g> and applies a single combined filter.
+function appendUnit(parent,unit,defs){
+  if(unit.shape){const e=buildShapeEl(unit.shape,defs);e.dataset.id=unit.shape.id;parent.append(e);return[[unit.shape,e]];}
+  const g=el('g',{}),pairs=[];
+  for(const m of unit.members){const e=buildShapeElRaw(m,defs);e.dataset.id=m.id;g.append(e);pairs.push([m,e]);}
+  applyEffects(g,unit.members[0],defs);   // one filter, built from the shared config
+  parent.append(g);return pairs;
+}
 function render(){
   resetDefs();
   gBoard.innerHTML='';
   gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:state.doc.bg||'#ffffff'}));
   gBoard.append(el('rect',{x:0,y:0,width:state.doc.w,height:state.doc.h,fill:'none',stroke:'#00000022','stroke-width':1/state.zoom}));
   gContent.innerHTML='';
-  for(const s of renderOrder()){if(!shapeVisible(s))continue;const e=buildShapeEl(s);e.dataset.id=s.id;e.style.cursor='move';gContent.append(e);
+  const pairs=[];
+  for(const u of renderUnits(renderOrder().filter(shapeVisible)))
+    for(const p of appendUnit(gContent,u,gDefs)){p[1].style.cursor='move';pairs.push(p);}
+  for(const[s,e]of pairs){
     if(s.type==='text'){try{const bb=e.getBBox();if(s.boxWidth>0){s.w=s.boxWidth;s.h=bb.height||s.fontSize*1.2;}else{s.w=bb.width||s.w;s.h=bb.height||s.fontSize*1.2;}if(s.align==='justify')justifyText(e,s.boxWidth>0?s.boxWidth:s.w);}catch(_){}}}
   updateViewport();renderOverlay();updateStatus();
 }
@@ -2775,7 +2806,11 @@ function buildExportRegion(region,whiteBg){
   svg.append(defs);
   if(whiteBg)svg.append(el('rect',{x:bb.x,y:bb.y,width:bb.w,height:bb.h,fill:state.doc.bg||'#ffffff'}));
   const list=region==='selection'?renderOrder().filter(s=>state.sel.includes(s.id)):renderOrder().filter(shapeVisible);
-  for(const s of list){if(fillIsGrad(s))appendShapeGrad(defs,'fillg_'+s.id,s.fillGrad);svg.append(buildShapeEl(s,defs));}
+  // same unit grouping as the canvas, so a group's unified shadow exports as one shadow too
+  for(const u of renderUnits(list)){
+    for(const s of(u.members||[u.shape]))if(fillIsGrad(s))appendShapeGrad(defs,'fillg_'+s.id,s.fillGrad);
+    appendUnit(svg,u,defs);
+  }
   return{svg:new XMLSerializer().serializeToString(svg),w:bb.w,h:bb.h};
 }
 function downloadBytes(name,bin,type,handle){const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i)&0xff;saveBlob(new Blob([bytes],{type}),name,handle);}
