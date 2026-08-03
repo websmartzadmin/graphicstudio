@@ -587,7 +587,7 @@
 <body>
 <div id="app">
   <div id="topbar">
-    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 215</span></div>
+    <div class="brand">Grafix<small>Anywhere</small> <span style="font-size:10px;color:#ffd60a;font-weight:600;margin-left:4px;border:1px solid #ffd60a55;border-radius:4px;padding:1px 5px;">BUILD 216</span></div>
     <div class="menubar" id="menubar"></div>
     <div id="docName" title="Document name — click to rename" contenteditable="plaintext-only" spellcheck="false">Untitled</div>
   </div>
@@ -2490,12 +2490,18 @@ function _elSubpaths(el){const g=el.tagName.toLowerCase(),A=(k,d)=>{const v=pars
   if(g==='line')return[{closed:false,pts:[{x:A('x1'),y:A('y1')},{x:A('x2'),y:A('y2')}]}];
   if(g==='polygon'||g==='polyline'){const n=(el.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number),a=[];for(let k=0;k+1<n.length;k+=2)a.push({x:n[k],y:n[k+1]});return[{closed:g==='polygon',pts:a}];}
   return[];}
+// parse an opacity that may legitimately be 0 — `parseFloat(x)||1` turned "0" into 1 because 0 is
+// falsy, so a fill-opacity:0 (transparent fill, e.g. an outline-only shape) imported as solid.
+function _svgOpacity(v){if(v===''||v==null)return 1;const n=parseFloat(v);return isNaN(n)?1:n;}
 function _svgStyle(el,svg){const cs=getComputedStyle(el),fill=_svgPaint(cs.fill,svg),stroke=_svgPaint(cs.stroke,svg),sw=parseFloat(cs.strokeWidth)||0,op=parseFloat(cs.opacity);
-  const fillOn=!!fill,strokeOn=!!stroke&&sw>0;
+  const fillOpacity=_svgOpacity(cs.fillOpacity)*_svgAlpha(cs.fill);
+  // a fill that is fully transparent isn't a fill — otherwise an outline-only shape imports as a
+  // solid black blob covering whatever it was outlining.
+  const fillOn=!!fill&&fillOpacity>0,strokeOn=!!stroke&&sw>0;
   const fg=fillOn?_svgGradient(cs.fill,svg):null;   // caller rewrites fill to url(#fillg_<id>) once the id exists
   return{fill:fill||'#000000',fillOn,fillGrad:fg||undefined,stroke:stroke||'#000000',strokeOn,strokeWidth:sw||1,opacity:isNaN(op)?1:op,
-    fillOpacity:((cs.fillOpacity===''?1:parseFloat(cs.fillOpacity))||1)*_svgAlpha(cs.fill),
-    strokeOpacity:((cs.strokeOpacity===''?1:parseFloat(cs.strokeOpacity))||1)*_svgAlpha(cs.stroke),
+    fillOpacity,
+    strokeOpacity:_svgOpacity(cs.strokeOpacity)*_svgAlpha(cs.stroke),
     fillRule:cs.fillRule==='evenodd'?'evenodd':'nonzero',cap:cs.strokeLinecap||'butt',join:cs.strokeLinejoin||'miter',miter:parseFloat(cs.strokeMiterlimit)||4,dash:'',blend:'normal',_show:fillOn||strokeOn};}
 // a gradient fill renders from this shape's own def, which is keyed on its id
 function _svgFixGrad(s){if(s.fillGrad)s.fill='url(#fillg_'+s.id+')';else delete s.fillGrad;return s;}
